@@ -1,0 +1,2844 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pantau — Dasbor Monitoring Akun</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    box-sizing: border-box;
+    --bg:#090D15;
+    --bg-2:#0C121D;
+    --panel:#111928;
+    --panel-2:#0E1522;
+    --border:#1E293D;
+    --border-soft:#182236;
+    --text:#EAEEF6;
+    --text-dim:#8A93A8;
+    --text-faint:#5C6478;
+    --amber:#FF2E3E;
+    --amber-dim:#4A1013;
+    --green:#3ED598;
+    --green-dim:#123326;
+    --red:#F4685E;
+    --red-dim:#3A1B1D;
+    --blue:#4FA8E8;
+    --blue-dim:#122A3A;
+    --text-body:#CBD3E1;
+    --queued-bg:#12202E;
+    --pending-bg:#1E2A1A;
+    --pending-fg:#C7D66B;
+    --media-end:#161f30;
+    --chip-on-text:#FFD9DC;
+    --bar-bg:rgba(9,13,21,.94);
+    --tab-bg:rgba(12,18,29,.97);
+    color-scheme:dark;
+    --radius-s:6px;
+    --radius-m:10px;
+    --radius-l:16px;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  :root[data-theme="light"]{
+    color-scheme:light;
+    --bg:#F3F5F9; --bg-2:#FFFFFF; --panel:#FFFFFF; --panel-2:#F1F4F9;
+    --border:#D9DFEA; --border-soft:#E6EAF2;
+    --text:#111827; --text-dim:#4B5568; --text-faint:#7A8499;
+    --amber:#E11D2E; --amber-dim:#FDE3E5;
+    --green:#0F9F6E; --green-dim:#D9F5E8;
+    --red:#D93A31; --red-dim:#FCE0DE;
+    --blue:#1D7FC7; --blue-dim:#DCEEFB;
+    --text-body:#2E3748; --queued-bg:#DCEEFB;
+    --pending-bg:#EEF3D2; --pending-fg:#5E6B12;
+    --media-end:#E4E9F2; --chip-on-text:#9B1420;
+    --bar-bg:rgba(255,255,255,.94); --tab-bg:rgba(255,255,255,.97);
+  }
+  :root[data-theme="light"] body{background-image:radial-gradient(1200px 500px at 90% -10%, rgba(225,29,46,0.06), transparent 60%);}
+  *{box-sizing:inherit; margin:0; padding:0;}
+  html{scroll-padding-top: env(safe-area-inset-top, 0px); height:100%;}
+  body{
+    height:100%;
+    background:var(--bg);
+    background-image:
+      radial-gradient(1200px 500px at 90% -10%, rgba(255,46,62,0.08), transparent 60%),
+      radial-gradient(900px 500px at -10% 20%, rgba(79,168,232,0.05), transparent 60%);
+    color:var(--text);
+    font-family:'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    font-size:14px;
+    line-height:1.5;
+  }
+  .mono{font-family:'JetBrains Mono', ui-monospace, monospace;}
+
+  a, button{font-family:inherit; color:inherit;}
+  button{cursor:pointer; border:none; background:none;}
+
+  /* ---------- Shell ---------- */
+  .shell{
+    display:flex;
+    min-height:100%;
+  }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:236px;
+    flex-shrink:0;
+    background:var(--bg-2);
+    border-right:1px solid var(--border-soft);
+    padding:20px 14px 20px;
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+    position:sticky;
+    top:0;
+    height:100vh;
+    height:100dvh;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:0 6px;
+  }
+  .brand-mark{
+    width:30px; height:30px;
+    border-radius:8px;
+    background:linear-gradient(155deg, var(--amber), #7A0F17);
+    position:relative;
+    flex-shrink:0;
+  }
+  .brand-mark::after{
+    content:"";
+    position:absolute; inset:8px;
+    border-radius:2px;
+    background:var(--bg-2);
+    clip-path:polygon(0 100%, 40% 30%, 60% 55%, 100% 0, 100% 100%);
+  }
+  .brand-name{font-weight:700; font-size:15px; letter-spacing:-0.01em;}
+  .brand-sub{font-size:11px; color:var(--text-faint); margin-top:1px;}
+
+  .nav-group{display:flex; flex-direction:column; gap:2px;}
+  .nav-label{
+    font-size:11px; color:var(--text-faint); padding:10px 10px 6px;
+    font-weight:600;
+  }
+  .nav-item{
+    display:flex; align-items:center; gap:10px;
+    padding:9px 10px;
+    border-radius:var(--radius-s);
+    color:var(--text-dim);
+    font-size:13.5px;
+    font-weight:500;
+    text-align:left;
+    width:100%;
+    transition:background .12s ease, color .12s ease;
+  }
+  .nav-item svg{width:16px; height:16px; flex-shrink:0; opacity:.8;}
+  .nav-item:hover{background:var(--panel); color:var(--text);}
+  .nav-item.active{
+    background:var(--panel);
+    color:var(--text);
+    box-shadow:inset 2px 0 0 var(--amber);
+  }
+  .nav-item.active svg{opacity:1; color:var(--amber);}
+
+  .sidebar-foot{
+    margin-top:auto;
+    border-top:1px solid var(--border-soft);
+    padding-top:14px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .avatar{
+    width:30px; height:30px; border-radius:50%;
+    background:var(--panel);
+    border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700; color:var(--amber);
+  }
+  .sidebar-foot .name{font-size:12.5px; font-weight:600;}
+  .sidebar-foot .role{font-size:11px; color:var(--text-faint);}
+
+  /* ---------- Main ---------- */
+  .main{
+    flex:1;
+    min-width:0;
+    padding:22px 26px 60px;
+  }
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:16px; flex-wrap:wrap;
+    margin-bottom:22px;
+  }
+  .topbar h1{font-size:19px; font-weight:700; letter-spacing:-0.01em;}
+  .runtime{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:12px; color:var(--text-dim);
+    background:var(--panel); border:1px solid var(--border);
+    padding:5px 10px 5px 8px; border-radius:999px;
+    margin-top:4px;
+  }
+  .dot{width:6px; height:6px; border-radius:50%; background:var(--green); box-shadow:0 0 0 3px var(--green-dim);}
+  .dot.warn{background:var(--amber); box-shadow:0 0 0 3px var(--amber-dim);}
+
+  .topbar-actions{display:flex; gap:8px; flex-wrap:wrap;}
+  .btn{
+    font-size:12.5px; font-weight:600;
+    padding:8px 13px;
+    border-radius:var(--radius-s);
+    border:1px solid var(--border);
+    background:var(--panel);
+    color:var(--text);
+    display:inline-flex; align-items:center; gap:6px;
+    transition:border-color .12s ease, background .12s ease;
+  }
+  .btn:hover{border-color:var(--text-faint);}
+  .btn.primary{
+    background:var(--amber);
+    color:#FFE9EA;
+    border-color:var(--amber);
+  }
+  .btn.primary:hover{background:#FF5560;}
+  .btn.danger{color:var(--red); border-color:var(--red-dim);}
+  .btn.ghost{background:transparent;}
+  .btn.small{padding:6px 10px; font-size:11.5px;}
+
+  /* ---------- Stat cards ---------- */
+  .stat-grid{
+    display:grid;
+    grid-template-columns:repeat(6, 1fr);
+    gap:12px;
+    margin-bottom:20px;
+  }
+  .stat-card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius-m);
+    padding:14px 14px 13px;
+    position:relative;
+    overflow:hidden;
+  }
+  .stat-card .icon{
+    width:26px; height:26px; border-radius:7px;
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:10px;
+  }
+  .stat-card .icon svg{width:14px; height:14px;}
+  .stat-card .label{font-size:11.5px; color:var(--text-dim); margin-bottom:4px;}
+  .stat-card .value{font-size:22px; font-weight:700; letter-spacing:-0.02em;}
+  .stat-card .delta{font-size:11px; margin-top:5px; color:var(--text-faint);}
+  .stat-card .delta.up{color:var(--green);}
+  .stat-card .delta.down{color:var(--red);}
+  .icon.i-amber{background:var(--amber-dim); color:var(--amber);}
+  .icon.i-green{background:var(--green-dim); color:var(--green);}
+  .icon.i-red{background:var(--red-dim); color:var(--red);}
+  .icon.i-blue{background:var(--blue-dim); color:var(--blue);}
+
+  /* ---------- Panels ---------- */
+  .grid-2{
+    display:grid;
+    grid-template-columns:1.55fr 1fr;
+    gap:14px;
+    align-items:start;
+  }
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius-l);
+    padding:18px;
+  }
+  .panel-head{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:14px; gap:10px; flex-wrap:wrap;
+  }
+  .panel-head h2{font-size:14.5px; font-weight:700;}
+  .panel-head p{font-size:11.5px; color:var(--text-faint); margin-top:2px;}
+  .seg{
+    display:flex; background:var(--panel-2); border:1px solid var(--border);
+    border-radius:999px; padding:2px; font-size:11.5px;
+  }
+  .seg button{padding:5px 10px; border-radius:999px; color:var(--text-faint); font-weight:600;}
+  .seg button.on{background:var(--panel); color:var(--text);}
+
+  /* chart */
+  .chart-wrap{padding-top:4px;}
+  .chart-legend{display:flex; gap:16px; font-size:11.5px; color:var(--text-dim); margin-bottom:12px;}
+  .chart-legend span{display:inline-flex; align-items:center; gap:6px;}
+  .chart-legend i{width:8px; height:8px; border-radius:2px; display:inline-block;}
+
+  /* posts list */
+  .post-item{
+    padding:12px 0;
+    border-top:1px solid var(--border-soft);
+    display:flex; gap:10px;
+  }
+  .post-item:first-child{border-top:none; padding-top:2px;}
+  .post-rank{
+    width:20px; height:20px; border-radius:6px; flex-shrink:0;
+    background:var(--panel-2); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    font-size:10.5px; font-weight:700; color:var(--text-faint);
+    margin-top:1px;
+  }
+  .post-body p{font-size:12.8px; color:var(--text-body); line-height:1.5;}
+  .post-meta{display:flex; gap:12px; margin-top:7px; font-size:11px; color:var(--text-faint);}
+  .post-meta span{display:inline-flex; align-items:center; gap:4px;}
+
+  /* accounts */
+  .acc-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:12px;
+  }
+  .acc-card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius-l);
+    padding:16px;
+  }
+  .acc-top{display:flex; align-items:center; gap:10px; margin-bottom:12px;}
+  .acc-avatar{
+    width:36px; height:36px; border-radius:9px;
+    background:var(--panel-2); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:13px; color:var(--text-dim);
+  }
+  .acc-handle{font-weight:700; font-size:13.5px;}
+  .acc-plat{font-size:11px; color:var(--text-faint);}
+  .pill{
+    font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:999px;
+    display:inline-flex; align-items:center; gap:5px; margin-left:auto;
+  }
+  .pill.on{background:var(--green-dim); color:var(--green);}
+  .pill.off{background:var(--red-dim); color:var(--red);}
+  .pill.dot-i{width:5px; height:5px; border-radius:50%; background:currentColor;}
+  .acc-row{
+    display:flex; justify-content:space-between;
+    font-size:11.8px; padding:6px 0;
+    border-top:1px solid var(--border-soft);
+    color:var(--text-dim);
+  }
+  .acc-row:first-of-type{border-top:none;}
+  .acc-row b{color:var(--text); font-weight:600;}
+  .acc-avatar.plat-ig{background:linear-gradient(135deg,#F58529,#DD2A7B 55%,#8134AF); color:#fff; border-color:transparent;}
+  .acc-avatar.plat-tiktok{background:#000; color:#25F4EE; border-color:#232323;}
+  .acc-avatar.plat-lynk{color:var(--red);}
+  .acc-avatar.plat-youtube{background:#FF0000; color:#fff; border-color:transparent;}
+  .acc-avatar.plat-facebook{background:#1877F2; color:#fff; border-color:transparent;}
+  .acc-avatar.plat-x{background:#000; color:#fff; border-color:#2A2A2A;}
+  .acc-avatar.plat-whatsapp{background:#25D366; color:#06280F; border-color:transparent;}
+  .acc-avatar.plat-telegram{background:#229ED9; color:#fff; border-color:transparent;}
+  .acc-avatar.plat-pinterest{background:#E60023; color:#fff; border-color:transparent;}
+  .acc-actions{display:flex; gap:6px; margin-top:12px;}
+  .acc-actions .btn{flex:1; justify-content:center;}
+
+  /* ---------- Platform filter chips ---------- */
+  .filter-row{display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;}
+  .chip{
+    font-size:12px; font-weight:600; padding:7px 13px; border-radius:999px;
+    border:1px solid var(--border); background:var(--panel); color:var(--text-dim);
+    display:inline-flex; align-items:center; gap:7px; transition:border-color .12s ease, color .12s ease, background .12s ease;
+  }
+  .chip .sw{width:8px; height:8px; border-radius:2px; display:inline-block;}
+  .chip .count{font-size:10.5px; color:var(--text-faint); background:var(--panel-2); padding:1px 6px; border-radius:999px;}
+  .chip.on{background:var(--amber-dim); border-color:var(--amber); color:var(--chip-on-text);}
+  .chip.on .count{background:rgba(255,46,62,0.16); color:var(--amber);}
+  .chip:hover{border-color:var(--text-faint);}
+  .acc-card.hidden{display:none;}
+
+  /* content types (composer) */
+  .type-grid{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:10px;
+  }
+  .type-card{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:var(--radius-m);
+    padding:13px;
+    cursor:pointer;
+    transition:border-color .12s ease, transform .12s ease;
+  }
+  .type-card:hover{border-color:var(--amber); transform:translateY(-1px);}
+  .type-card.selected{border-color:var(--amber); background:rgba(255,46,62,0.08);}
+  .type-card .t-name{font-weight:700; font-size:13px; margin-bottom:3px;}
+  .type-card .t-desc{font-size:11px; color:var(--text-faint); margin-bottom:10px; min-height:28px;}
+  .type-card .t-meta{display:flex; justify-content:space-between; font-size:10.5px; color:var(--text-dim);}
+  .badge-live{
+    font-size:9.5px; font-weight:700; background:var(--green-dim); color:var(--green);
+    padding:1px 6px; border-radius:999px;
+  }
+
+  .view{display:none;}
+  .view.active{display:block;}
+
+  .section-title{font-size:13px; font-weight:700; margin:24px 0 12px; color:var(--text-dim); letter-spacing:.01em;}
+  .section-title:first-child{margin-top:0;}
+
+  /* ---------- Platform share bars ---------- */
+  .plat-share-row{display:flex; align-items:center; gap:12px; padding:8px 0;}
+  .plat-share-label{width:118px; flex-shrink:0; font-size:12.3px; font-weight:600; display:flex; align-items:center; gap:7px;}
+  .plat-share-label .sw{width:8px; height:8px; border-radius:2px; flex-shrink:0;}
+  .plat-share-track{flex:1; height:8px; border-radius:999px; background:var(--panel-2); overflow:hidden;}
+  .plat-share-fill{height:100%; border-radius:999px;}
+  .plat-share-val{width:74px; flex-shrink:0; text-align:right; font-size:11.5px; color:var(--text-dim);}
+
+  /* ---------- Toggle switch ---------- */
+  .switch{
+    width:34px; height:19px; border-radius:999px;
+    background:var(--panel-2); border:1px solid var(--border);
+    position:relative; flex-shrink:0; transition:background .15s ease, border-color .15s ease;
+  }
+  .switch::after{
+    content:""; position:absolute; top:2px; left:2px;
+    width:13px; height:13px; border-radius:50%;
+    background:var(--text-faint);
+    transition:transform .15s ease, background .15s ease;
+  }
+  .switch.on{background:var(--amber-dim); border-color:var(--amber);}
+  .switch.on::after{background:var(--amber); transform:translateX(15px);}
+
+  /* ---------- Automation modules ---------- */
+  .module-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;}
+  .module-card{
+    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-l);
+    padding:15px;
+  }
+  .module-top{display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:4px;}
+  .module-name{font-weight:700; font-size:13.5px;}
+  .module-desc{font-size:11.3px; color:var(--text-faint); margin-bottom:12px;}
+  .module-toggles{display:flex; flex-direction:column; gap:8px; margin-bottom:12px;}
+  .toggle-row{display:flex; align-items:center; justify-content:space-between; font-size:11.8px; color:var(--text-dim);}
+  .module-meta{display:flex; justify-content:space-between; font-size:11px; color:var(--text-faint); border-top:1px solid var(--border-soft); padding-top:10px; margin-bottom:12px;}
+  .module-actions{display:flex; gap:6px;}
+  .module-actions .btn{flex:1; justify-content:center;}
+  .status-tag{font-size:10px; font-weight:700; padding:2px 7px; border-radius:999px;}
+  .status-tag.ok{background:var(--green-dim); color:var(--green);}
+  .status-tag.off{background:var(--panel-2); color:var(--text-faint); border:1px solid var(--border);}
+
+  /* ---------- Table (queue / log) ---------- */
+  .table{width:100%; border-collapse:collapse;}
+  .table th{
+    text-align:left; font-size:10.8px; font-weight:600; color:var(--text-faint);
+    text-transform:uppercase; letter-spacing:.03em;
+    padding:0 12px 10px; border-bottom:1px solid var(--border-soft);
+  }
+  .table td{
+    padding:11px 12px; font-size:12.5px; color:var(--text-body);
+    border-bottom:1px solid var(--border-soft); vertical-align:middle;
+  }
+  .table tr:last-child td{border-bottom:none;}
+  .table tr:hover td{background:var(--panel-2);}
+  .status-chip{
+    font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:999px;
+    display:inline-flex; align-items:center; gap:5px;
+  }
+  .status-chip.success{background:var(--green-dim); color:var(--green);}
+  .status-chip.pending{background:var(--pending-bg); color:var(--pending-fg);}
+  .status-chip.error{background:var(--red-dim); color:var(--red);}
+  .status-chip.queued{background:var(--queued-bg); color:var(--blue);}
+
+  /* ---------- Media grid ---------- */
+  .media-grid{display:grid; grid-template-columns:repeat(6, 1fr); gap:10px;}
+  .media-item{
+    aspect-ratio:1; border-radius:var(--radius-m);
+    border:1px solid var(--border);
+    background:linear-gradient(145deg, var(--panel-2), var(--media-end));
+    position:relative; overflow:hidden;
+    display:flex; align-items:flex-end;
+  }
+  .media-item svg{position:absolute; top:50%; left:50%; transform:translate(-50%,-58%); width:22px; height:22px; color:var(--text-faint); opacity:.5;}
+  .media-item .media-tag{
+    position:relative; z-index:1; font-size:9.5px; color:var(--text-dim);
+    background:rgba(9,13,21,0.75); padding:3px 6px; width:100%;
+  }
+
+  /* ---------- Settings ---------- */
+  .settings-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .field{display:flex; flex-direction:column; gap:6px; margin-bottom:14px;}
+  .field label{font-size:11.5px; color:var(--text-dim); font-weight:600;}
+  .field input, .field select, .field textarea{
+    background:var(--panel-2); border:1px solid var(--border); border-radius:var(--radius-s);
+    padding:9px 11px; color:var(--text); font-size:12.8px; font-family:inherit;
+  }
+  .field textarea{resize:vertical; min-height:64px;}
+  .field-row{display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-top:1px solid var(--border-soft);}
+  .field-row:first-child{border-top:none;}
+  .field-row .ft-name{font-size:12.8px; font-weight:600;}
+  .field-row .ft-desc{font-size:11.3px; color:var(--text-faint); margin-top:2px;}
+
+  /* ---------- Platform badges & filter ---------- */
+  .plat-badge{
+    display:inline-flex; align-items:center; gap:5px;
+    font-size:10.5px; font-weight:700; padding:3px 8px 3px 6px;
+    border-radius:999px; border:1px solid var(--border);
+    color:var(--text-dim);
+  }
+  .plat-badge .plat-dot{width:14px; height:14px; border-radius:5px; flex-shrink:0; display:flex; align-items:center; justify-content:center;}
+  .plat-badge .plat-dot svg{width:9px; height:9px;}
+  .plat-threads .plat-dot{background:#EDEDED; color:#111;}
+  .plat-instagram .plat-dot{background:linear-gradient(145deg,#F9CE34,#EE2A7B 55%,#6228D7); color:#fff;}
+  .plat-tiktok .plat-dot{background:#0B0B0B; color:#25F4EE; box-shadow: -1.5px 0 0 0 #FE2C55 inset;}
+  .plat-lynk .plat-dot{background:#2E7DE1; color:#fff;}
+  .plat-pwa .plat-dot{background:var(--panel-2); color:var(--text-dim); border:1px solid var(--border);}
+
+  .plat-filter{display:flex; gap:7px; flex-wrap:wrap; margin-bottom:16px;}
+  .plat-chip{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:12px; font-weight:600; color:var(--text-dim);
+    background:var(--panel); border:1px solid var(--border);
+    padding:6px 12px 6px 8px; border-radius:999px;
+    transition:border-color .12s ease, color .12s ease, background .12s ease;
+  }
+  .plat-chip .plat-dot{width:14px; height:14px; border-radius:5px; display:flex; align-items:center; justify-content:center;}
+  .plat-chip .plat-dot svg{width:9px; height:9px;}
+  .plat-chip .count{font-size:10.5px; color:var(--text-faint); font-weight:700;}
+  .plat-chip.on{border-color:var(--amber); color:var(--text); background:rgba(255,46,62,0.08);}
+  .plat-chip.on .count{color:var(--amber);}
+
+  /* ---------- Analytics ---------- */
+  .stat-grid.cols-4{grid-template-columns:repeat(4,1fr);}
+  .heat-grid{display:grid; grid-template-columns:34px repeat(6,1fr); gap:5px; align-items:center;}
+  .heat-label{font-size:10.5px; color:var(--text-faint);}
+  .heat-head{font-size:10.5px; color:var(--text-faint); text-align:center;}
+  .heat-cell{height:30px; border-radius:6px; font-size:10px; display:flex; align-items:center; justify-content:center; color:var(--text);}
+  .heat-note{font-size:11.5px; color:var(--text-dim); margin-top:12px;}
+  .heat-note b{color:var(--amber);}
+  @media (max-width:1080px){ .stat-grid.cols-4{grid-template-columns:repeat(2,1fr);} }
+
+  /* ---------- Calendar ---------- */
+  .cal-legend{display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; color:var(--text-dim); margin-bottom:12px;}
+  .cal-legend span{display:inline-flex; align-items:center; gap:6px;}
+  .cal-legend i{width:8px; height:8px; border-radius:2px; display:inline-block;}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
+  .cal-head{font-size:10.5px; color:var(--text-faint); text-align:center; padding-bottom:4px; font-weight:600;}
+  .cal-day{min-height:88px; background:var(--panel-2); border:1px solid var(--border-soft); border-radius:var(--radius-s); padding:6px; display:flex; flex-direction:column; gap:3px; min-width:0;}
+  .cal-day.blank{background:transparent; border-color:transparent;}
+  .cal-day.today{border-color:var(--amber); background:rgba(255,46,62,0.06);}
+  .cal-num{font-size:11px; color:var(--text-dim); font-weight:600;}
+  .cal-day.today .cal-num{color:var(--amber);}
+  .cal-chip{display:flex; align-items:center; gap:5px; font-size:10px; color:var(--text-body); background:var(--panel); border-radius:4px; padding:2px 5px; overflow:hidden; white-space:nowrap;}
+  .cal-chip i{width:6px; height:6px; border-radius:50%; background:var(--c); flex-shrink:0;}
+  .cal-chip span{overflow:hidden; text-overflow:ellipsis;}
+  .cal-more{font-size:10px; color:var(--text-faint); padding-left:5px;}
+  @media (max-width:760px){ .cal-day{min-height:54px; padding:4px;} .cal-chip span{display:none;} .cal-chip{background:transparent; padding:0;} }
+
+  /* ---------- Notifications ---------- */
+  .nav-badge{margin-left:auto; background:var(--amber); color:#fff; font-size:10px; font-weight:700; padding:1px 6px; border-radius:999px;}
+  .nav-badge.hidden{display:none !important;}
+  .notif-item{display:flex; gap:12px; padding:13px 0; border-top:1px solid var(--border-soft); align-items:flex-start; cursor:pointer; transition:opacity .15s ease;}
+  .notif-item:first-child{border-top:none;}
+  .notif-item.read{opacity:.45;}
+  .notif-item.hidden{display:none;}
+  .notif-ic{width:28px; height:28px; border-radius:8px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;}
+  .notif-ic.error{background:var(--red-dim); color:var(--red);}
+  .notif-ic.warn{background:var(--amber-dim); color:var(--amber);}
+  .notif-ic.info{background:var(--blue-dim); color:var(--blue);}
+  .notif-body{flex:1; min-width:0;}
+  .notif-title{font-size:13px; font-weight:600;}
+  .notif-desc{font-size:12px; color:var(--text-dim); margin-top:2px;}
+  .notif-side{display:flex; flex-direction:column; align-items:flex-end; gap:8px; flex-shrink:0;}
+  .notif-time{font-size:11px; color:var(--text-faint); white-space:nowrap;}
+
+  /* ---------- Global search ---------- */
+  .search-btn{display:flex; align-items:center; gap:8px; width:100%; padding:8px 10px; background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-s); color:var(--text-faint); font-size:12.5px; text-align:left; flex-shrink:0;}
+  .search-btn:hover{border-color:var(--text-faint); color:var(--text-dim);}
+  .search-btn span{flex:1;}
+  .search-btn kbd{font-family:'JetBrains Mono', monospace; font-size:10px; background:var(--panel-2); border:1px solid var(--border); border-radius:4px; padding:1px 5px; color:var(--text-faint);}
+  .search-overlay{position:fixed; inset:0; z-index:100; background:rgba(4,6,10,.72); display:none; align-items:flex-start; justify-content:center; padding:calc(env(safe-area-inset-top, 0px) + 70px) 14px 20px; backdrop-filter:blur(3px);}
+  .search-overlay.open{display:flex;}
+  .search-box{width:100%; max-width:560px; background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-l); overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.5);}
+  .search-input-wrap{display:flex; gap:10px; align-items:center; padding:14px 16px; border-bottom:1px solid var(--border-soft); color:var(--text-faint);}
+  .search-input-wrap input{flex:1; min-width:0; background:none; border:none; outline:none; color:var(--text); font-size:16px; font-family:inherit;}
+  .search-results{max-height:min(380px, 55vh); overflow-y:auto; padding:6px;}
+  .search-item{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:9px 10px; border-radius:var(--radius-s); cursor:pointer;}
+  .search-item.sel{background:var(--panel-2); box-shadow:inset 2px 0 0 var(--amber);}
+  .search-title{font-size:13px; font-weight:600;}
+  .search-sub{font-size:11.5px; color:var(--text-faint);}
+  .search-group{font-size:10px; font-weight:700; color:var(--text-faint); background:var(--panel-2); border:1px solid var(--border); padding:2px 7px; border-radius:999px; flex-shrink:0;}
+  .search-empty{padding:22px; text-align:center; color:var(--text-faint); font-size:12.5px;}
+  .search-foot{padding:9px 16px; font-size:10.5px; color:var(--text-faint); border-top:1px solid var(--border-soft);}
+  @media (max-width:760px){ .search-btn{width:auto; padding:8px;} .search-btn span, .search-btn kbd{display:none;} .search-foot{display:none;} }
+
+  /* ---------- Theme toggle ---------- */
+  .theme-toggle{width:30px; height:30px; border-radius:8px; background:var(--panel); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-dim); flex-shrink:0;}
+  .theme-toggle:hover{border-color:var(--text-faint); color:var(--text);}
+  .theme-toggle svg{width:15px; height:15px;}
+  .theme-toggle .i-moon{display:none;}
+  :root[data-theme="light"] .theme-toggle .i-sun{display:none;}
+  :root[data-theme="light"] .theme-toggle .i-moon{display:block;}
+  .sidebar-foot .theme-toggle{margin-left:auto;}
+  .m-header .theme-toggle{width:38px; height:38px; border-radius:10px; margin-left:auto; margin-right:8px;}
+
+  /* ---------- Toast & connect modal ---------- */
+  .toast{position:fixed; left:50%; bottom:24px; transform:translate(-50%,20px); opacity:0; pointer-events:none; z-index:300; background:var(--panel); color:var(--text); border:1px solid var(--border); border-left:3px solid var(--amber); padding:10px 14px; border-radius:10px; font-size:12.5px; box-shadow:0 10px 30px rgba(0,0,0,.4); max-width:calc(100% - 28px); transition:opacity .18s ease, transform .18s ease;}
+  .toast.show{opacity:1; transform:translate(-50%,0);}
+  .modal-overlay{position:fixed; inset:0; z-index:200; background:rgba(4,6,10,.72); display:none; align-items:center; justify-content:center; padding:14px; backdrop-filter:blur(3px);}
+  .modal-overlay.open{display:flex;}
+  .modal-box{width:100%; max-width:480px; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:18px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.5);}
+  .modal-box h3{font-size:15px; margin-bottom:4px;}
+  .modal-box > p{font-size:12px; color:var(--text-faint); margin-bottom:14px;}
+  .modal-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px;}
+  .modal-item{display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px 6px; background:var(--panel-2); border:1px solid var(--border-soft); border-radius:12px; font-size:12px; font-weight:600; color:var(--text);}
+  .modal-item:hover{border-color:var(--amber);}
+  @media (max-width:760px){ .toast{bottom:calc(78px + env(safe-area-inset-bottom, 0px));} .modal-grid{grid-template-columns:repeat(2,1fr);} }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 1080px){
+    .stat-grid{grid-template-columns:repeat(3,1fr);}
+    .grid-2{grid-template-columns:1fr;}
+    .acc-grid{grid-template-columns:repeat(2,1fr);}
+    .type-grid{grid-template-columns:repeat(2,1fr);}
+    .module-grid{grid-template-columns:repeat(2,1fr);}
+    .media-grid{grid-template-columns:repeat(4,1fr);}
+    .settings-grid{grid-template-columns:1fr;}
+  }
+  @media (max-width: 760px){
+    .shell{flex-direction:column;}
+    .sidebar{
+      position:static; height:auto; width:100%;
+      flex-direction:row; align-items:center;
+      overflow-x:auto; padding:14px 14px;
+      gap:16px;
+    }
+    .nav-group{flex-direction:row;}
+    .nav-label{display:none;}
+    .sidebar-foot{display:none;}
+    .nav-item span{display:none;}
+    .main{padding:18px 14px 40px;}
+    .stat-grid{grid-template-columns:repeat(2,1fr);}
+    .acc-grid{grid-template-columns:1fr;}
+    .type-grid{grid-template-columns:1fr 1fr;}
+    .module-grid{grid-template-columns:1fr;}
+    .media-grid{grid-template-columns:repeat(3,1fr);}
+    .topbar h1{font-size:17px;}
+    .table-wrap{overflow-x:auto;}
+    .table{min-width:560px;}
+  }
+
+  /* ---------- Mobile app layout ---------- */
+  .m-header, .m-tabbar, .m-sheet, .m-sheet-bg{display:none;}
+  @media (max-width:760px){
+    html{-webkit-tap-highlight-color:transparent;}
+    .sidebar{display:none;}
+    .search-overlay{z-index:200; padding-top:calc(env(safe-area-inset-top, 0px) + 16px);}
+
+    .m-header{display:flex; align-items:center; justify-content:space-between; position:sticky; top:env(safe-area-inset-top, 0px); z-index:50; padding:10px 14px; background:var(--bar-bg); backdrop-filter:blur(8px); border-bottom:1px solid var(--border-soft);}
+    .m-brand{display:flex; align-items:center; gap:9px; font-weight:700; font-size:15px;}
+    .m-brand .brand-mark{width:26px; height:26px; border-radius:7px;}
+    .m-brand .brand-mark::after{inset:7px;}
+    .m-search{width:38px; height:38px; border-radius:10px; background:var(--panel); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-dim);}
+
+    .main{padding:14px 14px calc(88px + env(safe-area-inset-bottom, 0px));}
+    .topbar{margin-bottom:16px; gap:12px;}
+    .topbar h1{font-size:18px;}
+    .topbar-actions{width:100%;}
+    .topbar-actions .btn{flex:1 1 auto; justify-content:center; min-height:40px;}
+    .topbar-actions .seg{flex:1 1 100%; justify-content:space-between;}
+    .topbar-actions .seg button{flex:1; padding:8px 10px;}
+    .btn.small{min-height:36px;}
+    .panel{padding:14px; border-radius:14px;}
+    .stat-card{padding:12px;}
+    .stat-card .value{font-size:20px;}
+    .plat-share-label{width:96px; font-size:11.8px;}
+    .plat-share-val{width:68px; font-size:11px;}
+    .heat-cell{height:26px;}
+    .field input, .field select, .field textarea{font-size:16px;}
+    .filter-row{flex-wrap:nowrap; overflow-x:auto; margin-right:-14px; padding-right:14px; padding-bottom:4px; -webkit-overflow-scrolling:touch; scrollbar-width:none;}
+    .filter-row::-webkit-scrollbar{display:none;}
+    .chip{flex-shrink:0; white-space:nowrap; min-height:36px;}
+    .notif-item{flex-wrap:wrap;}
+    .notif-side{flex-direction:row; align-items:center; justify-content:space-between; width:100%; padding-left:40px;}
+
+    .m-tabbar{display:flex; position:fixed; left:0; right:0; bottom:0; z-index:100; height:calc(62px + env(safe-area-inset-bottom, 0px)); padding-bottom:env(safe-area-inset-bottom, 0px); background:var(--tab-bg); backdrop-filter:blur(10px); border-top:1px solid var(--border);}
+    .m-tab{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; color:var(--text-faint); font-size:10px; font-weight:600; position:relative; min-width:0;}
+    .m-tab svg{width:20px; height:20px;}
+    .m-tab.active{color:var(--amber);}
+    .m-tab.active::before{content:""; position:absolute; top:0; left:28%; right:28%; height:2px; border-radius:0 0 2px 2px; background:var(--amber);}
+    .m-badge{position:absolute; top:6px; left:calc(50% + 4px); background:var(--amber); color:#fff; font-size:9px; font-weight:700; min-width:15px; height:15px; line-height:15px; text-align:center; border-radius:999px; padding:0 4px;}
+
+    .m-sheet-bg{position:fixed; inset:0; z-index:90; background:rgba(4,6,10,.6);}
+    .m-sheet-bg.open{display:block;}
+    .m-sheet{position:fixed; left:10px; right:10px; bottom:calc(72px + env(safe-area-inset-bottom, 0px)); z-index:95; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:14px; grid-template-columns:repeat(3,1fr); gap:8px; box-shadow:0 12px 40px rgba(0,0,0,.5);}
+    .m-sheet.open{display:grid;}
+    .m-sheet-item{display:flex; flex-direction:column; align-items:center; gap:7px; padding:13px 6px; border-radius:12px; background:var(--panel-2); border:1px solid var(--border-soft); color:var(--text-dim); font-size:11.5px; font-weight:600; text-align:center;}
+    .m-sheet-item svg{width:20px; height:20px;}
+    .m-sheet-item.active{color:var(--amber); border-color:var(--amber);}
+  }
+
+  /* ---------- Login (Supabase) ---------- */
+  .auth-overlay{position:fixed; inset:0; z-index:500; background:var(--bg); display:flex; align-items:center; justify-content:center; padding:20px;}
+  .auth-overlay.hidden{display:none;}
+  .auth-card{width:100%; max-width:380px; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:24px;}
+  .auth-brand{display:flex; align-items:center; gap:10px; font-weight:700; font-size:17px; margin-bottom:6px;}
+  .auth-sub{font-size:12px; color:var(--text-faint); margin-bottom:16px;}
+  #auth-msg{font-size:12.5px; margin-bottom:12px; min-height:18px; line-height:1.45;}
+  .auth-btn{width:100%; min-height:42px; border-radius:var(--radius-s); background:var(--amber); color:#FFE9EA; font-weight:700; font-size:13.5px; border:1px solid var(--amber);}
+  .auth-btn:hover{background:#FF5560;}
+  .auth-btn:disabled{opacity:.6; cursor:default;}
+  .auth-btn.ghost{background:transparent; color:var(--text-dim); border-color:var(--border);}
+  .auth-btn.ghost:hover{background:var(--panel-2);}
+
+  /* scrollbar */
+  ::-webkit-scrollbar{width:8px; height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--border); border-radius:4px;}
+</style>
+<script>
+  (function(){
+    var t = 'dark';
+    try { t = localStorage.getItem('pantau-theme') || 'dark'; } catch(e) {}
+    if(t !== 'light' && t !== 'dark') t = 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-brand"><div class="brand-mark"></div><span>Pantau</span></div>
+    <div class="auth-sub">Masuk untuk melihat data akunmu</div>
+    <div id="auth-msg">Memuat…</div>
+    <div id="auth-form" style="display:none;">
+      <div class="field"><label>Email</label><input id="auth-email" type="email" autocomplete="username" placeholder="email@kamu.com"></div>
+      <div class="field"><label>Password</label><input id="auth-pass" type="password" autocomplete="current-password"></div>
+      <button class="auth-btn" id="auth-submit" type="button">Masuk</button>
+    </div>
+  </div>
+</div>
+<div class="shell">
+
+  <header class="m-header">
+    <div class="m-brand"><div class="brand-mark"></div><span>Pantau</span></div>
+    <button class="theme-toggle" type="button" aria-label="Ganti tema terang/gelap">
+      <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+    <button class="m-search" id="m-search" type="button" aria-label="Cari">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    </button>
+  </header>
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div>
+        <div class="brand-name">Pantau</div>
+        <div class="brand-sub">Monitor Akun & Automasi</div>
+      </div>
+    </div>
+
+    <button class="search-btn" id="search-open" type="button">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <span>Cari…</span><kbd>Ctrl K</kbd>
+    </button>
+
+    <nav class="nav-group">
+      <div class="nav-label">RINGKASAN</div>
+      <button class="nav-item active" data-view="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        <span>Dasbor</span>
+      </button>
+      <button class="nav-item" data-view="akun">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.6 3.1-6.5 7-6.5s7 2.9 7 6.5"/></svg>
+        <span>Akun</span>
+      </button>
+      <button class="nav-item" data-view="konten">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M7.5 9h9M7.5 13h9M7.5 17h5"/></svg>
+        <span>Konten</span>
+      </button>
+      <button class="nav-item" data-view="analitik">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+        <span>Insight</span>
+      </button>
+      <button class="nav-item" data-view="kalender">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>
+        <span>Kalender</span>
+      </button>
+    </nav>
+
+    <nav class="nav-group">
+      <div class="nav-label">OPERASIONAL</div>
+      <button class="nav-item" data-view="automasi">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v3M12 18v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M3 12h3M18 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/><circle cx="12" cy="12" r="4"/></svg>
+        <span>Automasi</span>
+      </button>
+      <button class="nav-item" data-view="balasan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.5 8.5 0 1 1-4-7.2"/><path d="M21 4v5h-5"/></svg>
+        <span>Balasan</span>
+      </button>
+      <button class="nav-item" data-view="antrian">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9.5h18"/></svg>
+        <span>Antrian</span>
+      </button>
+      <button class="nav-item" data-view="media">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3.5" y="4.5" width="17" height="12" rx="1.5"/><path d="M8 20h8M12 16.5V20"/></svg>
+        <span>Media</span>
+      </button>
+    </nav>
+
+    <nav class="nav-group">
+      <div class="nav-label">SISTEM</div>
+      <button class="nav-item" data-view="log">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19h16M4 15l4-5 3 3 5-7 4 5"/></svg>
+        <span>Log & Audit</span>
+      </button>
+      <button class="nav-item" data-view="tim">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 2.7-5 6-5s6 2 6 5"/><circle cx="17.5" cy="9" r="2.3"/><path d="M17 14.5c2.6 0 4.5 1.7 4.5 4.5"/></svg>
+        <span>Tim</span>
+      </button>
+      <button class="nav-item" data-view="notifikasi">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+        <span>Notifikasi</span><span class="nav-badge" id="notif-badge">6</span>
+      </button>
+      <button class="nav-item" data-view="pengaturan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+        <span>Pengaturan</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="avatar">JN</div>
+      <div>
+        <div class="name">Juan</div>
+        <div class="role">Pemilik ruang kerja</div>
+      </div>
+      <button class="theme-toggle" type="button" aria-label="Ganti tema terang/gelap" title="Ganti tema">
+        <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+
+    <!-- ===== DASHBOARD VIEW ===== -->
+    <section class="view active" id="view-dashboard">
+      <div class="topbar">
+        <div>
+          <h1>Dasbor</h1>
+          <div class="runtime"><span class="dot"></span> Automation Runtime · Berjalan</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn ghost">Buka Log</button>
+          <button class="btn">Lihat Antrian (3)</button>
+          <button class="btn primary">+ Sambungkan Akun</button>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="icon i-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="3"/><path d="M5 20c0-3.3 3-6 7-6s7 2.7 7 6"/></svg></div>
+          <div class="label">Total Akun</div>
+          <div class="value mono">13</div>
+          <div class="delta">10 platform terhubung</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon i-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></div>
+          <div class="label">Akun Aktif</div>
+          <div class="value mono">12</div>
+          <div class="delta up">↑ 3 dari kemarin</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon i-amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M7.5 9h9M7.5 13h9M7.5 17h5"/></svg></div>
+          <div class="label">Konten Terjadwal</div>
+          <div class="value mono">61</div>
+          <div class="delta">7 hari terakhir</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon i-red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg></div>
+          <div class="label">Error 24 Jam</div>
+          <div class="value mono">1</div>
+          <div class="delta down">Perlu ditinjau</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon i-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3.5" y="4.5" width="17" height="12" rx="1.5"/><path d="M8 20h8M12 16.5V20"/></svg></div>
+          <div class="label">Media Tersimpan</div>
+          <div class="value mono">38</div>
+          <div class="delta">Galeri media</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon i-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19h16M4 15l4-5 3 3 5-7 4 5"/></svg></div>
+          <div class="label">Baris Log Audit</div>
+          <div class="value mono">2.9k</div>
+          <div class="delta">Tersinkron</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Konten & Aktivitas</h2>
+              <p>Ringkasan jalankan otomasi per hari</p>
+            </div>
+            <div class="seg">
+              <button class="on">7h</button>
+              <button>14h</button>
+              <button>30h</button>
+            </div>
+          </div>
+          <div class="chart-legend">
+            <span><i style="background:var(--amber)"></i> Terpublikasi</span>
+            <span><i style="background:var(--green)"></i> Berhasil</span>
+            <span><i style="background:var(--red)"></i> Gagal</span>
+          </div>
+          <div class="chart-wrap" id="chart"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Postingan Teratas</h2>
+              <p>Performa 7 hari terakhir</p>
+            </div>
+          </div>
+          <div class="post-list">
+            <div class="post-item">
+              <div class="post-rank">1</div>
+              <div class="post-body">
+                <p>Cerita tentang kejadian tak terduga di lini produksi minggu lalu, ditulis ulang jadi format story ringan.</p>
+                <div class="post-meta">
+                  <span>👁 8.4k</span>
+                  <span>♥ 512</span>
+                  <span>↩ 61</span>
+                  <span>↻ 22</span>
+                </div>
+              </div>
+            </div>
+            <div class="post-item">
+              <div class="post-rank">2</div>
+              <div class="post-body">
+                <p>Fakta unik seputar kebiasaan kerja shift malam, dikemas sebagai thread edukatif singkat.</p>
+                <div class="post-meta">
+                  <span>👁 5.1k</span>
+                  <span>♥ 288</span>
+                  <span>↩ 34</span>
+                  <span>↻ 9</span>
+                </div>
+              </div>
+            </div>
+            <div class="post-item">
+              <div class="post-rank">3</div>
+              <div class="post-body">
+                <p>Menfess relasi kerja yang dibalut nada santai, memicu banyak komentar relatable dari pembaca.</p>
+                <div class="post-meta">
+                  <span>👁 3.7k</span>
+                  <span>♥ 201</span>
+                  <span>↩ 47</span>
+                  <span>↻ 6</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">Distribusi Aktivitas per Platform</div>
+      <div class="panel">
+        <div class="plat-share-row">
+          <div class="plat-share-label"><span class="sw" style="background:#8A93A8"></span>Threads</div>
+          <div class="plat-share-track"><div class="plat-share-fill" style="width:38%; background:#8A93A8;"></div></div>
+          <div class="plat-share-val mono">38% · 24</div>
+        </div>
+        <div class="plat-share-row">
+          <div class="plat-share-label"><span class="sw" style="background:linear-gradient(135deg,#F58529,#DD2A7B)"></span>Instagram</div>
+          <div class="plat-share-track"><div class="plat-share-fill" style="width:18%; background:linear-gradient(135deg,#F58529,#DD2A7B);"></div></div>
+          <div class="plat-share-val mono">18% · 11</div>
+        </div>
+        <div class="plat-share-row">
+          <div class="plat-share-label"><span class="sw" style="background:#25F4EE"></span>TikTok</div>
+          <div class="plat-share-track"><div class="plat-share-fill" style="width:12%; background:#25F4EE;"></div></div>
+          <div class="plat-share-val mono">12% · 7</div>
+        </div>
+        <div class="plat-share-row">
+          <div class="plat-share-label"><span class="sw" style="background:#25D366"></span>WhatsApp</div>
+          <div class="plat-share-track"><div class="plat-share-fill" style="width:10%; background:#25D366;"></div></div>
+          <div class="plat-share-val mono">10% · 6</div>
+        </div>
+        <div class="plat-share-row">
+          <div class="plat-share-label"><span class="sw" style="background:#1877F2"></span>Facebook</div>
+          <div class="plat-share-track"><div class="plat-share-fill" style="width:8%; background:#1877F2;"></div></div>
+          <div class="plat-share-val mono">8% · 5</div>
+        </div>
+        <div class="plat-share-row">
+          <div class="plat-share-label"><span class="sw" style="background:#229ED9"></span>Telegram</div>
+          <div class="plat-share-track"><div class="plat-share-fill" style="width:6%; background:#229ED9;"></div></div>
+          <div class="plat-share-val mono">6% · 4</div>
+        </div>
+        <div class="plat-share-row">
+          <div class="plat-share-label"><span class="sw" style="background:#FF0000"></span>YouTube</div>
+          <div class="plat-share-track"><div class="plat-share-fill" style="width:5%; background:#FF0000;"></div></div>
+          <div class="plat-share-val mono">5% · 3</div>
+        </div>
+        <div class="plat-share-row">
+          <div class="plat-share-label"><span class="sw" style="background:var(--red)"></span>Lainnya</div>
+          <div class="plat-share-track"><div class="plat-share-fill" style="width:3%; background:var(--red);"></div></div>
+          <div class="plat-share-val mono">3% · 1</div>
+        </div>
+      </div>
+
+      <div class="section-title">Akun yang Perlu Perhatian</div>
+      <div class="acc-grid">
+        <div class="acc-card">
+          <div class="acc-top">
+            <div class="acc-avatar">TJ</div>
+            <div>
+              <div class="acc-handle">@tj******</div>
+              <div class="acc-plat">Threads · Tester</div>
+            </div>
+            <span class="pill on"><i class="pill dot-i"></i>Aktif</span>
+          </div>
+          <div class="acc-row"><span>Token</span><b>Valid, 22 jam lagi</b></div>
+          <div class="acc-row"><span>Jalankan terakhir</span><b>10 menit lalu</b></div>
+          <div class="acc-row"><span>Antrian</span><b>4 konten</b></div>
+        </div>
+        <div class="acc-card">
+          <div class="acc-top">
+            <div class="acc-avatar">AR</div>
+            <div>
+              <div class="acc-handle">@ar*****h</div>
+              <div class="acc-plat">Threads · Produksi</div>
+            </div>
+            <span class="pill off"><i class="pill dot-i"></i>Error</span>
+          </div>
+          <div class="acc-row"><span>Token</span><b>Kedaluwarsa</b></div>
+          <div class="acc-row"><span>Jalankan terakhir</span><b>Gagal, 2 jam lalu</b></div>
+          <div class="acc-row"><span>Antrian</span><b>0 konten</b></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== AKUN VIEW ===== -->
+    <section class="view" id="view-akun">
+      <div class="topbar">
+        <div>
+          <h1>Akun</h1>
+          <div class="runtime"><span class="dot"></span> 12 dari 13 akun aktif · 10 platform</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn ghost">Token Manual</button>
+          <button class="btn primary">+ Sambungkan Akun</button>
+        </div>
+      </div>
+
+      <div class="filter-row" id="platform-filter">
+        <button class="chip on" data-platform="all">Semua <span class="count">13</span></button>
+        <button class="chip" data-platform="threads"><span class="sw" style="background:#8A93A8"></span>Threads <span class="count">3</span></button>
+        <button class="chip" data-platform="instagram"><span class="sw" style="background:linear-gradient(135deg,#F58529,#DD2A7B)"></span>Instagram <span class="count">1</span></button>
+        <button class="chip" data-platform="tiktok"><span class="sw" style="background:#25F4EE"></span>TikTok <span class="count">1</span></button>
+        <button class="chip" data-platform="youtube"><span class="sw" style="background:#FF0000"></span>YouTube <span class="count">1</span></button>
+        <button class="chip" data-platform="facebook"><span class="sw" style="background:#1877F2"></span>Facebook <span class="count">1</span></button>
+        <button class="chip" data-platform="x"><span class="sw" style="background:#fff"></span>X <span class="count">1</span></button>
+        <button class="chip" data-platform="whatsapp"><span class="sw" style="background:#25D366"></span>WhatsApp <span class="count">1</span></button>
+        <button class="chip" data-platform="telegram"><span class="sw" style="background:#229ED9"></span>Telegram <span class="count">1</span></button>
+        <button class="chip" data-platform="pinterest"><span class="sw" style="background:#E60023"></span>Pinterest <span class="count">1</span></button>
+        <button class="chip" data-platform="lynk"><span class="sw" style="background:var(--red)"></span>Lynk.id <span class="count">1</span></button>
+        <button class="chip" data-platform="internal"><span class="sw" style="background:var(--blue)"></span>Internal <span class="count">1</span></button>
+      </div>
+
+      <div class="acc-grid">
+        <div class="acc-card" data-platform="threads">
+          <div class="acc-top">
+            <div class="acc-avatar">AR</div>
+            <div>
+              <div class="acc-handle">@ar****h</div>
+              <div class="acc-plat">Threads</div>
+            </div>
+            <span class="pill on"><i class="pill dot-i"></i>Terhubung</span>
+          </div>
+          <div class="acc-row"><span>Threads ID</span><b class="mono">••••6152</b></div>
+          <div class="acc-row"><span>Kredensial</span><b>Terenkripsi</b></div>
+          <div class="acc-row"><span>Divalidasi</span><b>11 Sep, 00:00</b></div>
+          <div class="acc-actions">
+            <button class="btn small">Gunakan</button>
+            <button class="btn small ghost">Segarkan Token</button>
+          </div>
+        </div>
+        <div class="acc-card" data-platform="threads">
+          <div class="acc-top">
+            <div class="acc-avatar">TJ</div>
+            <div>
+              <div class="acc-handle">@tj******</div>
+              <div class="acc-plat">Threads</div>
+            </div>
+            <span class="pill on"><i class="pill dot-i"></i>Terhubung</span>
+          </div>
+          <div class="acc-row"><span>Threads ID</span><b class="mono">••••9953</b></div>
+          <div class="acc-row"><span>Kredensial</span><b>Terenkripsi</b></div>
+          <div class="acc-row"><span>Divalidasi</span><b>11 Sep, 00:00</b></div>
+          <div class="acc-actions">
+            <button class="btn small">Gunakan</button>
+            <button class="btn small ghost">Segarkan Token</button>
+          </div>
+        </div>
+        <div class="acc-card" data-platform="threads">
+          <div class="acc-top">
+            <div class="acc-avatar">AR</div>
+            <div>
+              <div class="acc-handle">@ar*****h</div>
+              <div class="acc-plat">Threads · Utama</div>
+            </div>
+            <span class="pill on"><i class="pill dot-i"></i>Terhubung</span>
+          </div>
+          <div class="acc-row"><span>Threads ID</span><b class="mono">••••9001</b></div>
+          <div class="acc-row"><span>Kredensial</span><b>Terenkripsi</b></div>
+          <div class="acc-row"><span>Divalidasi</span><b>11 Sep, 00:00</b></div>
+          <div class="acc-actions">
+            <button class="btn small">Gunakan</button>
+            <button class="btn small ghost">Segarkan Token</button>
+          </div>
+        </div>
+        <div class="acc-card" data-platform="instagram">
+          <div class="acc-top">
+            <div class="acc-avatar plat-ig">IG</div>
+            <div>
+              <div class="acc-handle">@ar.****.id</div>
+              <div class="acc-plat">Instagram</div>
+            </div>
+            <span class="pill on"><i class="pill dot-i"></i>Terhubung</span>
+          </div>
+          <div class="acc-row"><span>Tipe akun</span><b>Business</b></div>
+          <div class="acc-row"><span>Followers</span><b class="mono">12.4k</b></div>
+          <div class="acc-row"><span>Divalidasi</span><b>18 Sep, 09:12</b></div>
+          <div class="acc-actions">
+            <button class="btn small">Gunakan</button>
+            <button class="btn small ghost">Segarkan Token</button>
+          </div>
+        </div>
+        <div class="acc-card" data-platform="tiktok">
+          <div class="acc-top">
+            <div class="acc-avatar plat-tiktok">TT</div>
+            <div>
+              <div class="acc-handle">@ar****official</div>
+              <div class="acc-plat">TikTok</div>
+            </div>
+            <span class="pill off"><i class="pill dot-i"></i>Perlu Verifikasi</span>
+          </div>
+          <div class="acc-row"><span>Tipe akun</span><b>Creator</b></div>
+          <div class="acc-row"><span>Followers</span><b class="mono">3.1k</b></div>
+          <div class="acc-row"><span>Status</span><b style="color:var(--amber)">Menunggu OAuth</b></div>
+          <div class="acc-actions">
+            <button class="btn small primary">Sambungkan</button>
+          </div>
+        </div>
+        <div class="acc-card" data-platform="youtube">
+          <div class="acc-top">
+            <div class="acc-avatar plat-youtube">YT</div>
+            <div>
+              <div class="acc-handle">Juan — Trading & Digital</div>
+              <div class="acc-plat">YouTube</div>
+            </div>
+            <span class="pill on"><i class="pill dot-i"></i>Terhubung</span>
+          </div>
+          <div class="acc-row"><span>Subscriber</span><b class="mono">2.8k</b></div>
+          <div class="acc-row"><span>Video bulan ini</span><b>4</b></div>
+          <div class="acc-row"><span>Divalidasi</span><b>15 Sep, 14:22</b></div>
+          <div class="acc-actions">
+            <button class="btn small">Gunakan</button>
+            <button class="btn small ghost">Segarkan Token</button>
+          </div>
+        </div>
+        <div class="acc-card" data-platform="facebook">
+          <div class="acc-top">
+            <div class="acc-avatar plat-facebook">FB</div>
+            <div>
+              <div class="acc-handle">Toko Digital Juan</div>
+              <div class="acc-plat">Facebook Page</div>
+            </div>
+            <span class="pill on"><i class="pill dot-i"></i>Terhubung</span>
+          </div>
+          <div class="acc-row"><span>Followers</span><b class="mono">6.7k</b></div>
+          <div class="acc-row"><span>Post terjadwal</span><b>2</b></div>
+          <div class="acc-row"><span>Divalidasi</span><b>16 Sep, 10:05</b></div>
+          <div class="acc-actions">
+            <button class="btn small">Gunakan</button>
+            <button class="btn small ghost">Segarkan Token</button>
+          </div>
+        </div>
+        <div class="acc-card" data-platform="x">
+          <div class="acc-top">
+            <div class="acc-avatar plat-x">X</div>
+            <div>
+              <div class="acc-handle">@ar_****h</div>
+              <div class="acc-plat">X (Twitter)</div>
+            </div>
+            <span class="pill off"><i class="pill dot-i"></i>Perlu Verifikasi</span>
+          </div>
+          <div class="acc-row"><span>Tipe akun</span><b>Personal</b></div>
+          <div class="acc-row"><span>Followers</span><b class="mono">1.2k</b></div>
+          <div class="acc-row"><span>Status</span><b style="color:var(--amber)">Menunggu OAuth</b></div>
+          <div class="acc-actions">
+            <button class="btn small primary">Sambungkan</button>
+          </div>
+        </div>
+        <div class="acc-card" data-platform="whatsapp">
+          <div class="acc-top">
+            <div class="acc-avatar plat-whatsapp">WA</div>
+            <div>
+              <div class="acc-handle">Toko Digital Juan</div>
+              <div class="acc-plat">WhatsApp Business</div>
+            </div>
+            <span class="pill on"><i class="pill dot-i"></i>Terhubung</span>
+          </div>
+          <div class="acc-row"><span>Broadcast list</span><b class="mono">3</b></div>
+          <div class="acc-row"><span>Chat masuk hari ini</span><b>27</b></div>
+          <div class="acc-row"><span>Divalidasi</span><b>20 Sep, 08:40</b></div>
+          <div class="acc-actions">
+            <button class="btn small">Gunakan</button>
+            <button class="btn small ghost">Segarkan Token</button>
+          </div>
+        </div>
+        <div class="acc-card" data-platform="telegram">
+          <div class="acc-top">
+            <div class="acc-avatar plat-telegram">TG</div>
+            <div>
+              <div class="acc-handle">Ruang Yuan Signal</div>
+              <div class="acc-plat">Telegram Channel</div>
+            </div>
+            <span class="pill on"><i class="pill dot-i"></i>Terhubung</span>
+          </div>
+          <div class="acc-row"><span>Member</span><b class="mono">918</b></div>
+          <div class="acc-row"><span>Post terjadwal</span><b>1</b></div>
+          <div class="acc-row"><span>Divalidasi</span><b>21 Sep, 19:00</b></div>
+          <div class="acc-actions">
+            <button class="btn small">Gunakan</button>
+            <button class="btn small ghost">Segarkan Token</button>
+          </div>
+        </div>
+        <div class="acc-card" data-platform="pinterest">
+          <div class="acc-top">
+            <div class="acc-avatar plat-pinterest">PN</div>
+            <div>
+              <div class="acc-handle">Digital Product Juan</div>
+              <div class="acc-plat">Pinterest</div>
+            </div>
+            <span class="pill off"><i class="pill dot-i"></i>Perlu Verifikasi</span>
+          </div>
+          <div class="acc-row"><span>Tipe akun</span><b>Business</b></div>
+          <div class="acc-row"><span>Pin bulan ini</span><b>0</b></div>
+          <div class="acc-row"><span>Status</span><b style="color:var(--amber)">Menunggu OAuth</b></div>
+          <div class="acc-actions">
+            <button class="btn small primary">Sambungkan</button>
+          </div>
+        </div>
+        <div class="acc-card" data-platform="lynk">
+          <div class="acc-top">
+            <div class="acc-avatar plat-lynk">LK</div>
+            <div>
+              <div class="acc-handle">@lynkid_toko</div>
+              <div class="acc-plat">Lynk.id</div>
+            </div>
+            <span class="pill off"><i class="pill dot-i"></i>Terputus</span>
+          </div>
+          <div class="acc-row"><span>Terakhir sinkron</span><b>3 hari lalu</b></div>
+          <div class="acc-row"><span>Produk terpantau</span><b>12</b></div>
+          <div class="acc-row"><span>Status</span><b style="color:var(--red)">Token kedaluwarsa</b></div>
+          <div class="acc-actions">
+            <button class="btn small primary">Sambungkan Ulang</button>
+          </div>
+        </div>
+        <div class="acc-card" data-platform="internal">
+          <div class="acc-top">
+            <div class="acc-avatar">KT</div>
+            <div>
+              <div class="acc-handle">Kom Toso Plant #1</div>
+              <div class="acc-plat">Internal PWA</div>
+            </div>
+            <span class="pill on"><i class="pill dot-i"></i>Aktif</span>
+          </div>
+          <div class="acc-row"><span>Pengguna aktif</span><b>86</b></div>
+          <div class="acc-row"><span>Uptime</span><b>99.2%</b></div>
+          <div class="acc-row"><span>Versi</span><b class="mono">v1.4.2</b></div>
+          <div class="acc-actions">
+            <button class="btn small">Buka Panel</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== KONTEN VIEW ===== -->
+    <section class="view" id="view-konten">
+      <div class="topbar">
+        <div>
+          <h1>Buat Konten</h1>
+          <div class="runtime">Langkah 1 dari 4 · Pilih jenis konten</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn ghost">Draf Tersimpan</button>
+          <button class="btn primary">Lanjut →</button>
+        </div>
+      </div>
+
+      <div class="type-grid">
+        <div class="type-card selected">
+          <div class="t-name">Horror</div>
+          <div class="t-desc">Cerita horor dan misteri singkat</div>
+          <div class="t-meta"><span>0/50 hari ini</span><span class="badge-live">Terjadwal</span></div>
+        </div>
+        <div class="type-card">
+          <div class="t-name">Menfess / Curhat</div>
+          <div class="t-desc">Curhatan natural yang relatable</div>
+          <div class="t-meta"><span>0/50 hari ini</span><span class="badge-live">Terjadwal</span></div>
+        </div>
+        <div class="type-card">
+          <div class="t-name">Fakta Unik</div>
+          <div class="t-desc">Fakta menarik berbasis topik</div>
+          <div class="t-meta"><span>0/4 hari ini</span><span>Manual</span></div>
+        </div>
+        <div class="type-card">
+          <div class="t-name">Tips / Life Hack</div>
+          <div class="t-desc">Tips praktis sehari-hari</div>
+          <div class="t-meta"><span>0/4 hari ini</span><span>Manual</span></div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ===== ANALITIK VIEW ===== -->
+    <section class="view" id="view-analitik">
+      <div class="topbar">
+        <div>
+          <h1>Insight & Analitik</h1>
+          <div class="runtime"><span class="dot"></span> Data gabungan 10 platform</div>
+        </div>
+        <div class="topbar-actions">
+          <div class="seg">
+            <button>7h</button>
+            <button>14h</button>
+            <button class="on">30h</button>
+          </div>
+          <button class="btn ghost">Ekspor CSV</button>
+        </div>
+      </div>
+
+      <div class="stat-grid cols-4">
+        <div class="stat-card">
+          <div class="icon i-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></div>
+          <div class="label">Total Jangkauan</div>
+          <div class="value mono">184k</div>
+          <div class="delta up">↑ 12.4% vs periode lalu</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon i-amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 5.6a5.2 5.2 0 0 0-7.4 0L12 7l-1.4-1.4a5.2 5.2 0 0 0-7.4 7.4L12 21.8l8.8-8.8a5.2 5.2 0 0 0 0-7.4z"/></svg></div>
+          <div class="label">Engagement Rate</div>
+          <div class="value mono">4.7%</div>
+          <div class="delta up">↑ 0.6 poin</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon i-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 2.7-5 6-5s6 2 6 5M19 8v6M16 11h6"/></svg></div>
+          <div class="label">Followers Baru</div>
+          <div class="value mono">+1.2k</div>
+          <div class="delta up">↑ 8.1%</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon i-red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></div>
+          <div class="label">Klik Tautan (Lynk.id)</div>
+          <div class="value mono">2.3k</div>
+          <div class="delta down">↓ 3.2%</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Tren Jangkauan & Engagement</h2>
+              <p>14 hari terakhir, semua platform</p>
+            </div>
+          </div>
+          <div class="chart-legend">
+            <span><i style="background:var(--amber)"></i> Jangkauan</span>
+            <span><i style="background:var(--blue)"></i> Engagement</span>
+          </div>
+          <div class="chart-wrap" id="chart-insight"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Waktu Posting Terbaik</h2>
+              <p>Rata-rata engagement per jam</p>
+            </div>
+          </div>
+          <div class="heat-grid" id="heatmap"></div>
+          <div class="heat-note">Slot terbaik: <b>Jumat 18.00–21.00</b></div>
+        </div>
+      </div>
+
+      <div class="section-title">Performa per Platform</div>
+      <div class="panel">
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Platform</th><th>Jangkauan</th><th>Engagement</th><th>Followers Baru</th><th>Post</th><th>Tren</th></tr></thead>
+            <tbody>
+              <tr><td>Threads</td><td class="mono">71.2k</td><td class="mono">5.4%</td><td class="mono">+410</td><td class="mono">53</td><td><span class="status-chip success">↑ 14%</span></td></tr>
+              <tr><td>Instagram</td><td class="mono">48.9k</td><td class="mono">4.9%</td><td class="mono">+330</td><td class="mono">18</td><td><span class="status-chip success">↑ 9%</span></td></tr>
+              <tr><td>TikTok</td><td class="mono">31.6k</td><td class="mono">6.1%</td><td class="mono">+210</td><td class="mono">12</td><td><span class="status-chip success">↑ 21%</span></td></tr>
+              <tr><td>YouTube</td><td class="mono">12.4k</td><td class="mono">3.8%</td><td class="mono">+90</td><td class="mono">4</td><td><span class="status-chip queued">→ 0%</span></td></tr>
+              <tr><td>Facebook</td><td class="mono">9.7k</td><td class="mono">2.2%</td><td class="mono">+60</td><td class="mono">9</td><td><span class="status-chip error">↓ 6%</span></td></tr>
+              <tr><td>Telegram</td><td class="mono">4.1k</td><td class="mono">7.3%</td><td class="mono">+45</td><td class="mono">7</td><td><span class="status-chip success">↑ 4%</span></td></tr>
+              <tr><td>WhatsApp</td><td class="mono">3.2k</td><td class="mono">11.0%</td><td class="mono">+25</td><td class="mono">6</td><td><span class="status-chip success">↑ 2%</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section-title">Performa per Jenis Konten</div>
+      <div class="panel">
+        <div class="plat-share-row"><div class="plat-share-label">Horror</div><div class="plat-share-track"><div class="plat-share-fill" style="width:84%; background:var(--amber);"></div></div><div class="plat-share-val mono">6.8% ER</div></div>
+        <div class="plat-share-row"><div class="plat-share-label">Menfess / Curhat</div><div class="plat-share-track"><div class="plat-share-fill" style="width:72%; background:var(--amber);"></div></div><div class="plat-share-val mono">5.9% ER</div></div>
+        <div class="plat-share-row"><div class="plat-share-label">Fakta Unik</div><div class="plat-share-track"><div class="plat-share-fill" style="width:55%; background:var(--amber);"></div></div><div class="plat-share-val mono">4.5% ER</div></div>
+        <div class="plat-share-row"><div class="plat-share-label">Tips / Life Hack</div><div class="plat-share-track"><div class="plat-share-fill" style="width:41%; background:var(--amber);"></div></div><div class="plat-share-val mono">3.3% ER</div></div>
+        <div class="plat-share-row"><div class="plat-share-label">Trivia</div><div class="plat-share-track"><div class="plat-share-fill" style="width:30%; background:var(--amber);"></div></div><div class="plat-share-val mono">2.4% ER</div></div>
+      </div>
+    </section>
+
+    <!-- ===== KALENDER VIEW ===== -->
+    <section class="view" id="view-kalender">
+      <div class="topbar">
+        <div>
+          <h1>Kalender Konten</h1>
+          <div class="runtime"><span class="dot"></span> Oktober 2026 · 19 konten terjadwal</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn ghost">← Sep</button>
+          <button class="btn ghost">Nov →</button>
+          <button class="btn primary">+ Jadwalkan Konten</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="cal-legend">
+          <span><i style="background:#8A93A8"></i>Threads</span>
+          <span><i style="background:#DD2A7B"></i>Instagram</span>
+          <span><i style="background:#25F4EE"></i>TikTok</span>
+          <span><i style="background:#FF0000"></i>YouTube</span>
+          <span><i style="background:#1877F2"></i>Facebook</span>
+          <span><i style="background:#229ED9"></i>Telegram</span>
+          <span><i style="background:#25D366"></i>WhatsApp</span>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+    </section>
+
+    <!-- ===== TIM VIEW ===== -->
+    <section class="view" id="view-tim">
+      <div class="topbar">
+        <div>
+          <h1>Tim & Kolaborator</h1>
+          <div class="runtime"><span class="dot"></span> 4 anggota · 1 undangan menunggu</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn primary">+ Undang Anggota</button>
+        </div>
+      </div>
+      <div class="acc-grid">
+        <div class="acc-card">
+          <div class="acc-top"><div class="acc-avatar">JN</div><div><div class="acc-handle">Juan</div><div class="acc-plat">Pemilik</div></div><span class="pill on"><i class="pill dot-i"></i>Aktif</span></div>
+          <div class="acc-row"><span>Akses platform</span><b>Semua (10)</b></div>
+          <div class="acc-row"><span>Terakhir aktif</span><b>Sekarang</b></div>
+        </div>
+        <div class="acc-card">
+          <div class="acc-top"><div class="acc-avatar">RN</div><div><div class="acc-handle">Rani</div><div class="acc-plat">Editor</div></div><span class="pill on"><i class="pill dot-i"></i>Aktif</span></div>
+          <div class="acc-row"><span>Akses platform</span><b>Threads, IG, TikTok</b></div>
+          <div class="acc-row"><span>Terakhir aktif</span><b>20 menit lalu</b></div>
+          <div class="acc-actions"><button class="btn small ghost">Ubah Peran</button><button class="btn small danger">Hapus</button></div>
+        </div>
+        <div class="acc-card">
+          <div class="acc-top"><div class="acc-avatar">DM</div><div><div class="acc-handle">Dimas</div><div class="acc-plat">Analis</div></div><span class="pill on"><i class="pill dot-i"></i>Aktif</span></div>
+          <div class="acc-row"><span>Akses platform</span><b>Insight semua platform</b></div>
+          <div class="acc-row"><span>Terakhir aktif</span><b>Kemarin</b></div>
+          <div class="acc-actions"><button class="btn small ghost">Ubah Peran</button><button class="btn small danger">Hapus</button></div>
+        </div>
+        <div class="acc-card">
+          <div class="acc-top"><div class="acc-avatar">SR</div><div><div class="acc-handle">Sari</div><div class="acc-plat">Viewer</div></div><span class="pill on"><i class="pill dot-i"></i>Aktif</span></div>
+          <div class="acc-row"><span>Akses platform</span><b>Hanya lihat</b></div>
+          <div class="acc-row"><span>Terakhir aktif</span><b>3 hari lalu</b></div>
+          <div class="acc-actions"><button class="btn small ghost">Ubah Peran</button><button class="btn small danger">Hapus</button></div>
+        </div>
+        <div class="acc-card">
+          <div class="acc-top"><div class="acc-avatar">?</div><div><div class="acc-handle">anggota.baru@email.com</div><div class="acc-plat">Editor (undangan)</div></div><span class="pill off"><i class="pill dot-i"></i>Menunggu</span></div>
+          <div class="acc-row"><span>Dikirim</span><b>2 hari lalu</b></div>
+          <div class="acc-actions"><button class="btn small">Kirim Ulang</button><button class="btn small ghost">Batalkan</button></div>
+        </div>
+      </div>
+
+      <div class="section-title">Hak Akses per Peran</div>
+      <div class="panel">
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Peran</th><th>Buat Konten</th><th>Lihat Insight</th><th>Kelola Akun</th><th>Pengaturan</th></tr></thead>
+            <tbody>
+              <tr><td>Pemilik</td><td><span class="status-chip success">Ya</span></td><td><span class="status-chip success">Ya</span></td><td><span class="status-chip success">Ya</span></td><td><span class="status-chip success">Ya</span></td></tr>
+              <tr><td>Editor</td><td><span class="status-chip success">Ya</span></td><td><span class="status-chip success">Ya</span></td><td><span class="status-chip error">Tidak</span></td><td><span class="status-chip error">Tidak</span></td></tr>
+              <tr><td>Analis</td><td><span class="status-chip error">Tidak</span></td><td><span class="status-chip success">Ya</span></td><td><span class="status-chip error">Tidak</span></td><td><span class="status-chip error">Tidak</span></td></tr>
+              <tr><td>Viewer</td><td><span class="status-chip error">Tidak</span></td><td><span class="status-chip success">Ya</span></td><td><span class="status-chip error">Tidak</span></td><td><span class="status-chip error">Tidak</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== NOTIFIKASI VIEW ===== -->
+    <section class="view" id="view-notifikasi">
+      <div class="topbar">
+        <div>
+          <h1>Notifikasi</h1>
+          <div class="runtime"><span class="dot warn"></span> <span id="notif-count-text">6 belum dibaca</span></div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn ghost" id="notif-readall">Tandai Semua Dibaca</button>
+        </div>
+      </div>
+      <div class="filter-row" id="notif-filter">
+        <button class="chip on" data-sev="all">Semua</button>
+        <button class="chip" data-sev="error"><span class="sw" style="background:var(--red)"></span>Error</button>
+        <button class="chip" data-sev="warn"><span class="sw" style="background:var(--amber)"></span>Peringatan</button>
+        <button class="chip" data-sev="info"><span class="sw" style="background:var(--blue)"></span>Info</button>
+      </div>
+      <div class="panel">
+        <div class="notif-item" data-sev="error">
+          <div class="notif-ic error">!</div>
+          <div class="notif-body"><div class="notif-title">Publikasi gagal · Story "Shift Terakhir" ep.4</div><div class="notif-desc">Akun @ar****h · Threads · jadwal 23.00. Batas error berturut-turut hampir tercapai.</div></div>
+          <div class="notif-side"><span class="notif-time mono">2 jam lalu</span><button class="btn small primary">Coba Lagi</button></div>
+        </div>
+        <div class="notif-item" data-sev="error">
+          <div class="notif-ic error">!</div>
+          <div class="notif-body"><div class="notif-title">Lynk.id terputus</div><div class="notif-desc">Token kedaluwarsa, sinkron produk berhenti sejak 3 hari lalu.</div></div>
+          <div class="notif-side"><span class="notif-time mono">3 hari lalu</span><button class="btn small primary">Sambungkan Ulang</button></div>
+        </div>
+        <div class="notif-item" data-sev="warn">
+          <div class="notif-ic warn">▲</div>
+          <div class="notif-body"><div class="notif-title">Token Instagram akan kedaluwarsa</div><div class="notif-desc">Sisa kurang dari 24 jam. Segarkan supaya jadwal Reels tidak terhenti.</div></div>
+          <div class="notif-side"><span class="notif-time mono">5 jam lalu</span><button class="btn small">Segarkan Token</button></div>
+        </div>
+        <div class="notif-item" data-sev="warn">
+          <div class="notif-ic warn">▲</div>
+          <div class="notif-body"><div class="notif-title">X dan Pinterest menunggu OAuth</div><div class="notif-desc">Dua akun belum selesai diverifikasi, belum bisa dipantau.</div></div>
+          <div class="notif-side"><span class="notif-time mono">Kemarin</span><button class="btn small">Selesaikan</button></div>
+        </div>
+        <div class="notif-item" data-sev="info">
+          <div class="notif-ic info">i</div>
+          <div class="notif-body"><div class="notif-title">Rekap harian siap</div><div class="notif-desc">Jangkauan naik 12.4% dibanding periode lalu. Lihat detail di menu Insight.</div></div>
+          <div class="notif-side"><span class="notif-time mono">07.00</span></div>
+        </div>
+        <div class="notif-item" data-sev="info">
+          <div class="notif-ic info">i</div>
+          <div class="notif-body"><div class="notif-title">Undangan Editor belum diterima</div><div class="notif-desc">anggota.baru@email.com belum membuka undangan sejak 2 hari lalu.</div></div>
+          <div class="notif-side"><span class="notif-time mono">2 hari lalu</span><button class="btn small ghost">Kirim Ulang</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== AUTOMASI VIEW ===== -->
+    <section class="view" id="view-automasi">
+      <div class="topbar">
+        <div>
+          <h1>Content Engine</h1>
+          <div class="runtime"><span class="dot"></span> Kelola modul otomasi untuk @ar****h</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn danger ghost">Emergency Stop All</button>
+          <button class="btn primary">+ Tambah Modul</button>
+        </div>
+      </div>
+
+      <div class="module-grid">
+        <div class="module-card">
+          <div class="module-top"><div class="module-name">Horror</div><span class="status-tag ok">Sukses</span></div>
+          <div class="module-desc">Cerita horor dan misteri</div>
+          <div class="module-toggles">
+            <div class="toggle-row"><span>Jenis Konten Aktif</span><div class="switch on" data-toggle></div></div>
+            <div class="toggle-row"><span>Jadwal Otomatis</span><div class="switch on" data-toggle></div></div>
+          </div>
+          <div class="module-meta"><span>Berikutnya: 21.05.03</span><span>Antrian: 2</span></div>
+          <div class="module-actions">
+            <button class="btn small primary">Run Now</button>
+            <button class="btn small ghost">Settings</button>
+          </div>
+        </div>
+        <div class="module-card">
+          <div class="module-top"><div class="module-name">Menfess / Curhat</div><span class="status-tag ok">Sukses</span></div>
+          <div class="module-desc">Curhatan natural dan relatable</div>
+          <div class="module-toggles">
+            <div class="toggle-row"><span>Jenis Konten Aktif</span><div class="switch on" data-toggle></div></div>
+            <div class="toggle-row"><span>Jadwal Otomatis</span><div class="switch" data-toggle></div></div>
+          </div>
+          <div class="module-meta"><span>Berikutnya: Belum dijadwal</span><span>Antrian: 0</span></div>
+          <div class="module-actions">
+            <button class="btn small primary">Run Now</button>
+            <button class="btn small ghost">Settings</button>
+          </div>
+        </div>
+        <div class="module-card">
+          <div class="module-top"><div class="module-name">Story / Drama</div><span class="status-tag off">Nonaktif</span></div>
+          <div class="module-desc">Cerita episodik dan drama</div>
+          <div class="module-toggles">
+            <div class="toggle-row"><span>Jenis Konten Aktif</span><div class="switch" data-toggle></div></div>
+            <div class="toggle-row"><span>Jadwal Otomatis</span><div class="switch" data-toggle></div></div>
+          </div>
+          <div class="module-meta"><span>Terakhir: Belum pernah</span><span>Antrian: 0</span></div>
+          <div class="module-actions">
+            <button class="btn small primary">Run Now</button>
+            <button class="btn small ghost">Settings</button>
+          </div>
+        </div>
+        <div class="module-card">
+          <div class="module-top"><div class="module-name">Fakta Unik</div><span class="status-tag off">Nonaktif</span></div>
+          <div class="module-desc">Fakta menarik berbasis topik</div>
+          <div class="module-toggles">
+            <div class="toggle-row"><span>Jenis Konten Aktif</span><div class="switch" data-toggle></div></div>
+            <div class="toggle-row"><span>Jadwal Otomatis</span><div class="switch" data-toggle></div></div>
+          </div>
+          <div class="module-meta"><span>Terakhir: Belum pernah</span><span>Antrian: 0</span></div>
+          <div class="module-actions">
+            <button class="btn small primary">Run Now</button>
+            <button class="btn small ghost">Settings</button>
+          </div>
+        </div>
+        <div class="module-card">
+          <div class="module-top"><div class="module-name">Misteri</div><span class="status-tag off">Nonaktif</span></div>
+          <div class="module-desc">Misteri dan fenomena tak biasa</div>
+          <div class="module-toggles">
+            <div class="toggle-row"><span>Jenis Konten Aktif</span><div class="switch" data-toggle></div></div>
+            <div class="toggle-row"><span>Jadwal Otomatis</span><div class="switch" data-toggle></div></div>
+          </div>
+          <div class="module-meta"><span>Terakhir: Belum pernah</span><span>Antrian: 0</span></div>
+          <div class="module-actions">
+            <button class="btn small primary">Run Now</button>
+            <button class="btn small ghost">Settings</button>
+          </div>
+        </div>
+        <div class="module-card">
+          <div class="module-top"><div class="module-name">Tips / Life Hack</div><span class="status-tag off">Nonaktif</span></div>
+          <div class="module-desc">Tips praktis sehari-hari</div>
+          <div class="module-toggles">
+            <div class="toggle-row"><span>Jenis Konten Aktif</span><div class="switch" data-toggle></div></div>
+            <div class="toggle-row"><span>Jadwal Otomatis</span><div class="switch" data-toggle></div></div>
+          </div>
+          <div class="module-meta"><span>Terakhir: Belum pernah</span><span>Antrian: 0</span></div>
+          <div class="module-actions">
+            <button class="btn small primary">Run Now</button>
+            <button class="btn small ghost">Settings</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== BALASAN VIEW ===== -->
+    <section class="view" id="view-balasan">
+      <div class="topbar">
+        <div>
+          <h1>Balasan & Reply</h1>
+          <div class="runtime"><span class="dot"></span> Auto-reply berjalan setiap 5 menit</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>Balas Postingan Tertentu</h2><p>Tempel URL atau ID post untuk dibalas manual</p></div>
+          </div>
+          <div class="field">
+            <label>URL atau ID Post</label>
+            <input placeholder="https://www.threads.com/@user/post/XXXX atau ID post">
+          </div>
+          <div class="field">
+            <label>Instruksi tambahan (opsional)</label>
+            <textarea placeholder="Misal: balas dengan nada lucu dan singkat"></textarea>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn primary">Generate Preview</button>
+            <button class="btn ghost">Post Reply</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>Auto-Reply Balasan</h2><p>Balas komentar/reply di post kamu sendiri</p></div>
+          </div>
+          <div class="field-row">
+            <div>
+              <div class="ft-name">Nyalakan auto-reply</div>
+              <div class="ft-desc">Untuk @ar****h · setiap 5 menit</div>
+            </div>
+            <div class="switch on" data-toggle></div>
+          </div>
+          <div class="field" style="margin-top:12px;">
+            <label>Maksimal balasan per cek</label>
+            <input value="3">
+          </div>
+          <div class="field">
+            <label>Instruksi balasan</label>
+            <textarea>Balas santai kayak teman ngobrol: boleh bercanda/ngeledek ringan, friendly, pake bahasa gaul. Jangan kaku/serius/formal, jangan kayak CS. Tetap sopan, 1 balasan pendek, maks 200 char.</textarea>
+          </div>
+          <button class="btn primary">Simpan</button>
+          <button class="btn ghost">Run Now</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ANTRIAN VIEW ===== -->
+    <section class="view" id="view-antrian">
+      <div class="topbar">
+        <div>
+          <h1>Antrian</h1>
+          <div class="runtime"><span class="dot"></span> 6 item menunggu diproses</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn ghost">Bersihkan Gagal</button>
+          <button class="btn">Proses Semua</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Konten</th><th>Akun</th><th>Jenis</th><th>Jadwal</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              <tr><td>Fakta unik soal kebiasaan shift malam…</td><td>@ar****h</td><td>Fakta Unik</td><td class="mono">21.05</td><td><span class="status-chip queued">Terjadwal</span></td><td><button class="btn small ghost">Batal</button></td></tr>
+              <tr><td>Cerita horor "Lorong C3" bagian 2…</td><td>@ar****h</td><td>Horror</td><td class="mono">21.30</td><td><span class="status-chip queued">Terjadwal</span></td><td><button class="btn small ghost">Batal</button></td></tr>
+              <tr><td>Menfess soal rekan kerja yang…</td><td>@tj******</td><td>Menfess</td><td class="mono">22.00</td><td><span class="status-chip pending">Diproses</span></td><td><button class="btn small ghost">Lihat</button></td></tr>
+              <tr><td>Tips hemat waktu checklist harian…</td><td>@ar*****h</td><td>Tips</td><td class="mono">22.15</td><td><span class="status-chip success">Terkirim</span></td><td><button class="btn small ghost">Lihat</button></td></tr>
+              <tr><td>Story drama "Shift Terakhir" ep.4…</td><td>@ar****h</td><td>Story</td><td class="mono">23.00</td><td><span class="status-chip error">Gagal</span></td><td><button class="btn small primary">Coba Lagi</button></td></tr>
+              <tr><td>Trivia ringan seputar dunia kerja…</td><td>@ar*****h</td><td>Trivia</td><td class="mono">23.40</td><td><span class="status-chip queued">Terjadwal</span></td><td><button class="btn small ghost">Batal</button></td></tr>
+              <tr><td>Reels tips checklist harian shift…</td><td>@ar.****.id</td><td>Instagram · Reels</td><td class="mono">18.00</td><td><span class="status-chip queued">Terjadwal</span></td><td><button class="btn small ghost">Batal</button></td></tr>
+              <tr><td>Video pendek "3 kesalahan trading"…</td><td>@ar****official</td><td>TikTok</td><td class="mono">19.15</td><td><span class="status-chip pending">Diproses</span></td><td><button class="btn small ghost">Lihat</button></td></tr>
+              <tr><td>Broadcast promo produk digital…</td><td>Toko Digital Juan</td><td>WhatsApp</td><td class="mono">09.00</td><td><span class="status-chip success">Terkirim</span></td><td><button class="btn small ghost">Lihat</button></td></tr>
+              <tr><td>Sinyal mingguan pasangan forex…</td><td>Ruang Yuan Signal</td><td>Telegram</td><td class="mono">19.00</td><td><span class="status-chip queued">Terjadwal</span></td><td><button class="btn small ghost">Batal</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== MEDIA VIEW ===== -->
+    <section class="view" id="view-media">
+      <div class="topbar">
+        <div>
+          <h1>Galeri Media</h1>
+          <div class="runtime"><span class="dot"></span> 38 media tersimpan</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn ghost">Unggah</button>
+          <button class="btn primary">Generate AI Image</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="media-grid">
+          <div class="media-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5.5-5-4 4-2-2L3 18"/></svg><div class="media-tag">horror_01.jpg</div></div>
+          <div class="media-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5.5-5-4 4-2-2L3 18"/></svg><div class="media-tag">story_04.jpg</div></div>
+          <div class="media-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5.5-5-4 4-2-2L3 18"/></svg><div class="media-tag">misteri_02.jpg</div></div>
+          <div class="media-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5.5-5-4 4-2-2L3 18"/></svg><div class="media-tag">fakta_09.jpg</div></div>
+          <div class="media-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5.5-5-4 4-2-2L3 18"/></svg><div class="media-tag">tips_03.jpg</div></div>
+          <div class="media-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5.5-5-4 4-2-2L3 18"/></svg><div class="media-tag">horror_02.jpg</div></div>
+          <div class="media-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5.5-5-4 4-2-2L3 18"/></svg><div class="media-tag">drama_01.jpg</div></div>
+          <div class="media-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5.5-5-4 4-2-2L3 18"/></svg><div class="media-tag">trivia_05.jpg</div></div>
+          <div class="media-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5.5-5-4 4-2-2L3 18"/></svg><div class="media-tag">misteri_04.jpg</div></div>
+          <div class="media-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5.5-5-4 4-2-2L3 18"/></svg><div class="media-tag">horror_03.jpg</div></div>
+          <div class="media-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5.5-5-4 4-2-2L3 18"/></svg><div class="media-tag">tips_04.jpg</div></div>
+          <div class="media-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5.5-5-4 4-2-2L3 18"/></svg><div class="media-tag">story_05.jpg</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== LOG & AUDIT VIEW ===== -->
+    <section class="view" id="view-log">
+      <div class="topbar">
+        <div>
+          <h1>Log & Audit</h1>
+          <div class="runtime"><span class="dot"></span> 2.614 baris tersinkron</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn ghost">Ekspor CSV</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Waktu</th><th>Aksi</th><th>Akun</th><th>Detail</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">20:41:02</td><td>Publikasi Konten</td><td>@ar****h</td><td>Horror — "Lorong C3"</td><td><span class="status-chip success">Sukses</span></td></tr>
+              <tr><td class="mono">20:35:47</td><td>Auto-Reply</td><td>@ar****h</td><td>Balas 3 komentar</td><td><span class="status-chip success">Sukses</span></td></tr>
+              <tr><td class="mono">20:12:19</td><td>Refresh Token</td><td>@ar*****h</td><td>Token diperbarui manual</td><td><span class="status-chip success">Sukses</span></td></tr>
+              <tr><td class="mono">19:58:03</td><td>Publikasi Konten</td><td>@ar****h</td><td>Menfess — antrian #114</td><td><span class="status-chip error">Gagal</span></td></tr>
+              <tr><td class="mono">19:40:55</td><td>Sinkron Akun</td><td>@lynkid_toko</td><td>Sinkron produk gagal</td><td><span class="status-chip error">Gagal</span></td></tr>
+              <tr><td class="mono">19:20:10</td><td>Jalankan Modul</td><td>@tj******</td><td>Fakta Unik — manual run</td><td><span class="status-chip success">Sukses</span></td></tr>
+              <tr><td class="mono">19:05:33</td><td>Login</td><td>Juan</td><td>Masuk ke dasbor</td><td><span class="status-chip success">Sukses</span></td></tr>
+              <tr><td class="mono">18:50:12</td><td>Publikasi Konten</td><td>@ar.****.id</td><td>Instagram — Reels tips harian</td><td><span class="status-chip success">Sukses</span></td></tr>
+              <tr><td class="mono">18:30:40</td><td>Sinkron Followers</td><td>Toko Digital Juan</td><td>Facebook Page — sinkron metrik</td><td><span class="status-chip success">Sukses</span></td></tr>
+              <tr><td class="mono">18:02:05</td><td>Broadcast</td><td>Toko Digital Juan</td><td>WhatsApp Business — promo terkirim</td><td><span class="status-chip success">Sukses</span></td></tr>
+              <tr><td class="mono">17:44:29</td><td>Sambungkan Akun</td><td>@ar_****h</td><td>X (Twitter) — OAuth belum selesai</td><td><span class="status-chip error">Gagal</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PENGATURAN VIEW ===== -->
+    <section class="view" id="view-pengaturan">
+      <div class="topbar">
+        <div>
+          <h1>Pengaturan</h1>
+          <div class="runtime">Kelola preferensi ruang kerja</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn" id="btn-logout">Keluar</button>
+          <button class="btn primary">Simpan Perubahan</button>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head"><div><h2>Umum</h2><p>Identitas dan zona waktu ruang kerja</p></div></div>
+          <div class="settings-grid">
+            <div class="field"><label>Nama Ruang Kerja</label><input value="Pantau — Juan"></div>
+            <div class="field"><label>Zona Waktu</label><input value="Asia/Jakarta (GMT+7)"></div>
+          </div>
+          <div class="field"><label>Batas Error Sebelum Auto-Stop</label><input value="5 error berturut-turut"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><div><h2>Notifikasi</h2><p>Kapan kamu ingin diberi tahu</p></div></div>
+          <div class="field-row"><div><div class="ft-name">Error otomasi</div><div class="ft-desc">Kirim notifikasi saat modul gagal jalan</div></div><div class="switch on" data-toggle></div></div>
+          <div class="field-row"><div><div class="ft-name">Token akan kedaluwarsa</div><div class="ft-desc">Ingatkan 24 jam sebelumnya</div></div><div class="switch on" data-toggle></div></div>
+          <div class="field-row"><div><div class="ft-name">Ringkasan harian</div><div class="ft-desc">Kirim rekap performa tiap pagi</div></div><div class="switch" data-toggle></div></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="modal-overlay" id="connect-modal">
+  <div class="modal-box">
+    <h3>Sambungkan Akun</h3>
+    <p>Pilih platform yang ingin dipantau. Kamu akan diarahkan ke halaman login resmi platform tersebut.</p>
+    <div class="modal-grid">
+      <button class="modal-item" data-name="Threads" type="button"><div class="acc-avatar">TH</div>Threads</button>
+      <button class="modal-item" data-name="Instagram" type="button"><div class="acc-avatar plat-ig">IG</div>Instagram</button>
+      <button class="modal-item" data-name="TikTok" type="button"><div class="acc-avatar plat-tiktok">TT</div>TikTok</button>
+      <button class="modal-item" data-name="YouTube" type="button"><div class="acc-avatar plat-youtube">YT</div>YouTube</button>
+      <button class="modal-item" data-name="Facebook" type="button"><div class="acc-avatar plat-facebook">FB</div>Facebook</button>
+      <button class="modal-item" data-name="X" type="button"><div class="acc-avatar plat-x">X</div>X</button>
+      <button class="modal-item" data-name="WhatsApp" type="button"><div class="acc-avatar plat-whatsapp">WA</div>WhatsApp</button>
+      <button class="modal-item" data-name="Telegram" type="button"><div class="acc-avatar plat-telegram">TG</div>Telegram</button>
+      <button class="modal-item" data-name="Pinterest" type="button"><div class="acc-avatar plat-pinterest">PN</div>Pinterest</button>
+    </div>
+    <button class="btn ghost" type="button" data-close>Batal</button>
+  </div>
+</div>
+
+<div class="search-overlay" id="search-overlay">
+  <div class="search-box">
+    <div class="search-input-wrap">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="search-input" type="text" placeholder="Cari menu, akun, platform, antrian, notifikasi…" autocomplete="off">
+    </div>
+    <div class="search-results" id="search-results"></div>
+    <div class="search-foot">↑↓ pilih · Enter buka · Esc tutup</div>
+  </div>
+</div>
+
+<script>
+  // ---- Nav switching ----
+  document.querySelectorAll('.nav-item[data-view]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.nav-item[data-view]').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+      var target = document.getElementById('view-' + btn.dataset.view);
+      if(target) target.classList.add('active');
+    });
+  });
+
+  // ---- Content type selection ----
+  document.querySelectorAll('.type-card').forEach(function(card){
+    card.addEventListener('click', function(){
+      document.querySelectorAll('.type-card').forEach(function(c){ c.classList.remove('selected'); });
+      card.classList.add('selected');
+    });
+  });
+
+  // ---- Insight line chart ----
+  (function(){
+    var el = document.getElementById('chart-insight');
+    if(!el) return;
+    var reach = [9.1,10.4,8.7,11.9,12.6,10.2,13.8,14.5,12.1,15.2,16.4,14.8,17.9,18.6];
+    var eng   = [3.9,4.2,4.0,4.5,4.4,4.1,4.8,5.0,4.6,5.1,4.9,4.7,5.2,5.4];
+    var w = 640, h = 200, pad = 26;
+    function line(data, color){
+      var max = Math.max.apply(null, data) * 1.1, min = Math.min.apply(null, data) * 0.85;
+      var pts = data.map(function(v, i){
+        var x = pad + i * ((w - pad*2) / (data.length - 1));
+        var y = h - pad - ((v - min) / (max - min)) * (h - pad*2);
+        return x.toFixed(1) + ',' + y.toFixed(1);
+      });
+      return '<polyline points="'+pts.join(' ')+'" fill="none" stroke="'+color+'" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>';
+    }
+    var grid = '';
+    for(var g=0; g<=3; g++){
+      var gy = pad + g * ((h - pad*2)/3);
+      grid += '<line x1="'+pad+'" y1="'+gy.toFixed(1)+'" x2="'+(w-pad)+'" y2="'+gy.toFixed(1)+'" stroke="var(--border-soft)" stroke-width="1"/>';
+    }
+    var labels = '<text x="'+pad+'" y="'+(h-6)+'" font-size="9.5" fill="var(--text-faint)" font-family="JetBrains Mono, monospace">27-09</text>' +
+                 '<text x="'+(w-pad)+'" y="'+(h-6)+'" text-anchor="end" font-size="9.5" fill="var(--text-faint)" font-family="JetBrains Mono, monospace">10-10</text>';
+    el.innerHTML = '<svg viewBox="0 0 '+w+' '+h+'" width="100%" style="display:block;">' + grid + line(reach,'#FF2E3E') + line(eng,'#4FA8E8') + labels + '</svg>';
+  })();
+
+  // ---- Posting time heatmap ----
+  (function(){
+    var el = document.getElementById('heatmap');
+    if(!el) return;
+    var days = ['Sen','Sel','Rab','Kam','Jum','Sab','Min'];
+    var slots = ['06','09','12','15','18','21'];
+    var data = [
+      [2,3,4,3,5,6],
+      [2,4,4,3,5,6],
+      [3,3,5,4,5,7],
+      [2,4,5,4,6,7],
+      [3,4,5,5,8,9],
+      [4,5,6,6,7,8],
+      [4,5,5,5,6,7]
+    ];
+    var html = '<div></div>' + slots.map(function(s){ return '<div class="heat-head mono">'+s+'</div>'; }).join('');
+    days.forEach(function(d, r){
+      html += '<div class="heat-label">'+d+'</div>';
+      data[r].forEach(function(v){
+        var a = (0.1 + v * 0.09).toFixed(2);
+        html += '<div class="heat-cell mono" style="background:rgba(255,46,62,'+a+')">'+v+'</div>';
+      });
+    });
+    el.innerHTML = html;
+  })();
+
+  // ---- Content calendar ----
+  (function(){
+    var el = document.getElementById('cal-grid');
+    if(!el) return;
+    var C = {th:'#8A93A8', ig:'#DD2A7B', tt:'#25F4EE', yt:'#FF0000', fb:'#1877F2', tg:'#229ED9', wa:'#25D366'};
+    var ev = {
+      2:[['ig','IG Reels']], 3:[['th','Horror']], 5:[['tt','TikTok']], 7:[['tg','Sinyal']],
+      9:[['th','Story']], 10:[['ig','IG Post'],['th','Menfess']], 12:[['wa','Broadcast']],
+      14:[['yt','Video']], 15:[['th','Horror'],['fb','FB Post']], 17:[['tt','TikTok']],
+      19:[['tg','Sinyal']], 21:[['ig','IG Reels']], 24:[['th','Fakta']], 26:[['yt','Video']],
+      28:[['wa','Broadcast']], 31:[['th','Horror']]
+    };
+    var html = ['Sen','Sel','Rab','Kam','Jum','Sab','Min'].map(function(d){ return '<div class="cal-head">'+d+'</div>'; }).join('');
+    for(var b=0; b<3; b++) html += '<div class="cal-day blank"></div>';
+    for(var d=1; d<=31; d++){
+      var items = ev[d] || [];
+      html += '<div class="cal-day'+(d===10?' today':'')+'"><div class="cal-num mono">'+d+'</div>';
+      items.slice(0,2).forEach(function(it){
+        html += '<div class="cal-chip" style="--c:'+C[it[0]]+'"><i></i><span>'+it[1]+'</span></div>';
+      });
+      if(items.length>2) html += '<div class="cal-more">+'+(items.length-2)+'</div>';
+      html += '</div>';
+    }
+    el.innerHTML = html;
+  })();
+
+  // ---- Notifications ----
+  (function(){
+    var items = document.querySelectorAll('.notif-item');
+    if(!items.length) return;
+    var badge = document.getElementById('notif-badge');
+    var txt = document.getElementById('notif-count-text');
+    function refresh(){
+      var n = document.querySelectorAll('.notif-item:not(.read)').length;
+      badge.textContent = n;
+      badge.classList.toggle('hidden', n === 0);
+      txt.textContent = n === 0 ? 'Semua sudah dibaca' : n + ' belum dibaca';
+    }
+    items.forEach(function(it){
+      it.addEventListener('click', function(e){
+        if(e.target.closest('button')) return;
+        it.classList.toggle('read');
+        refresh();
+      });
+    });
+    document.getElementById('notif-readall').addEventListener('click', function(){
+      items.forEach(function(it){ it.classList.add('read'); });
+      refresh();
+    });
+    var f = document.getElementById('notif-filter');
+    f.querySelectorAll('.chip').forEach(function(chip){
+      chip.addEventListener('click', function(){
+        f.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('on'); });
+        chip.classList.add('on');
+        items.forEach(function(it){
+          it.classList.toggle('hidden', chip.dataset.sev !== 'all' && it.dataset.sev !== chip.dataset.sev);
+        });
+      });
+    });
+  })();
+
+  // ---- Global search ----
+  (function(){
+    var ov = document.getElementById('search-overlay');
+    var inp = document.getElementById('search-input');
+    var list = document.getElementById('search-results');
+    if(!ov) return;
+    var idx = [];
+    [['dashboard','Dasbor','Ringkasan statistik & status'],['akun','Akun','Semua akun & platform terhubung'],['konten','Konten','Buat konten baru'],['analitik','Insight & Analitik','Jangkauan, engagement, heatmap'],['kalender','Kalender Konten','Jadwal posting bulanan'],['automasi','Automasi','Content Engine & modul'],['balasan','Balasan','Auto-reply & balas manual'],['antrian','Antrian','Konten menunggu diproses'],['media','Media','Galeri media tersimpan'],['log','Log & Audit','Riwayat aktivitas sistem'],['tim','Tim','Anggota & hak akses'],['notifikasi','Notifikasi','Alert & peringatan'],['pengaturan','Pengaturan','Umum & notifikasi']].forEach(function(m){ idx.push({t:m[1], s:m[2], g:'Menu', v:m[0]}); });
+    [['Threads','@ar****h','threads'],['Threads','@tj******','threads'],['Threads','@ar*****h (Utama)','threads'],['Instagram','@ar.****.id','instagram'],['TikTok','@ar****official','tiktok'],['YouTube','Juan — Trading & Digital','youtube'],['Facebook','Toko Digital Juan','facebook'],['X (Twitter)','@ar_****h','x'],['WhatsApp','Toko Digital Juan','whatsapp'],['Telegram','Ruang Yuan Signal','telegram'],['Pinterest','Digital Product Juan','pinterest'],['Lynk.id','@lynkid_toko','lynk'],['Internal','Kom Toso Plant #1','internal']].forEach(function(a){ idx.push({t:a[2] === 'lynk' || a[2] === 'internal' ? a[1] : a[1], s:a[0] + ' · akun', g:'Akun', v:'akun', p:a[2]}); });
+    [['Story "Shift Terakhir" ep.4','Gagal · Threads · 23.00'],['Reels tips checklist harian','Terjadwal · Instagram · 18.00'],['Video pendek "3 kesalahan trading"','Diproses · TikTok'],['Sinyal mingguan pasangan forex','Terjadwal · Telegram · 19.00'],['Broadcast promo produk digital','Terkirim · WhatsApp']].forEach(function(q){ idx.push({t:q[0], s:q[1], g:'Antrian', v:'antrian'}); });
+    [['Publikasi gagal','Story ep.4 · @ar****h'],['Lynk.id terputus','Token kedaluwarsa'],['Token Instagram akan kedaluwarsa','Sisa kurang dari 24 jam'],['X dan Pinterest menunggu OAuth','Belum diverifikasi']].forEach(function(n){ idx.push({t:n[0], s:n[1], g:'Notifikasi', v:'notifikasi'}); });
+    [['Rani','Editor'],['Dimas','Analis'],['Sari','Viewer'],['anggota.baru@email.com','Undangan Editor menunggu']].forEach(function(p){ idx.push({t:p[0], s:p[1], g:'Tim', v:'tim'}); });
+    [['Horror','Jenis konten'],['Menfess / Curhat','Jenis konten'],['Fakta Unik','Jenis konten'],['Tips / Life Hack','Jenis konten']].forEach(function(c){ idx.push({t:c[0], s:c[1] + ' · modul automasi', g:'Konten', v:'automasi'}); });
+
+    var cur = [], sel = 0;
+    function setSel(n){
+      sel = n;
+      list.querySelectorAll('.search-item').forEach(function(el, i){ el.classList.toggle('sel', i === n); });
+      var active = list.querySelectorAll('.search-item')[n];
+      if(active && active.scrollIntoView) active.scrollIntoView({block:'nearest'});
+    }
+    function go(i){
+      close();
+      var btn = document.querySelector('.nav-item[data-view="' + i.v + '"]');
+      if(btn) btn.click();
+      if(i.v === 'akun'){
+        var chip = document.querySelector('#platform-filter .chip[data-platform="' + (i.p || 'all') + '"]');
+        if(chip) chip.click();
+      }
+      window.scrollTo(0, 0);
+    }
+    function render(){
+      var q = inp.value.trim().toLowerCase();
+      cur = idx.filter(function(i){ return !q || (i.t + ' ' + i.s + ' ' + i.g).toLowerCase().indexOf(q) > -1; }).slice(0, 10);
+      sel = 0;
+      list.innerHTML = '';
+      if(!cur.length){
+        var e = document.createElement('div');
+        e.className = 'search-empty';
+        e.textContent = 'Tidak ada hasil untuk "' + inp.value + '"';
+        list.appendChild(e);
+        return;
+      }
+      cur.forEach(function(i, n){
+        var d = document.createElement('div');
+        d.className = 'search-item' + (n === 0 ? ' sel' : '');
+        var b = document.createElement('div');
+        var t = document.createElement('div'); t.className = 'search-title'; t.textContent = i.t;
+        var s = document.createElement('div'); s.className = 'search-sub'; s.textContent = i.s;
+        b.appendChild(t); b.appendChild(s);
+        var g = document.createElement('span'); g.className = 'search-group'; g.textContent = i.g;
+        d.appendChild(b); d.appendChild(g);
+        d.addEventListener('click', function(){ go(i); });
+        d.addEventListener('mousemove', function(){ if(sel !== n) setSel(n); });
+        list.appendChild(d);
+      });
+    }
+    function open(){ ov.classList.add('open'); inp.value = ''; render(); setTimeout(function(){ inp.focus(); }, 30); }
+    function close(){ ov.classList.remove('open'); inp.blur(); }
+
+    document.getElementById('search-open').addEventListener('click', open);
+    ov.addEventListener('click', function(e){ if(e.target === ov) close(); });
+    inp.addEventListener('input', render);
+    inp.addEventListener('keydown', function(e){
+      if(e.key === 'ArrowDown'){ e.preventDefault(); if(cur.length) setSel((sel + 1) % cur.length); }
+      else if(e.key === 'ArrowUp'){ e.preventDefault(); if(cur.length) setSel((sel - 1 + cur.length) % cur.length); }
+      else if(e.key === 'Enter'){ e.preventDefault(); if(cur[sel]) go(cur[sel]); }
+    });
+    document.addEventListener('keydown', function(e){
+      if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k'){ e.preventDefault(); ov.classList.contains('open') ? close() : open(); }
+      else if(e.key === 'Escape' && ov.classList.contains('open')){ close(); }
+      else if(e.key === '/' && !ov.classList.contains('open') && !/INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || '')){ e.preventDefault(); open(); }
+    });
+  })();
+
+  // ---- Mobile tab bar & menu sheet ----
+  (function(){
+    var info = {};
+    document.querySelectorAll('.nav-item[data-view]').forEach(function(b){
+      info[b.dataset.view] = {btn:b, svg:b.querySelector('svg'), label:b.querySelector('span').textContent.trim()};
+    });
+    var main = ['dashboard','akun','analitik','notifikasi'];
+    var more = ['konten','kalender','automasi','balasan','antrian','media','log','tim','pengaturan'];
+    var bar = document.createElement('nav'); bar.className = 'm-tabbar';
+    var bg = document.createElement('div'); bg.className = 'm-sheet-bg';
+    var sheet = document.createElement('div'); sheet.className = 'm-sheet';
+    function closeSheet(){ bg.classList.remove('open'); sheet.classList.remove('open'); menuTab.classList.remove('sheet-on'); }
+    function mk(cls, view, label, svg){
+      var el = document.createElement('button'); el.type = 'button'; el.className = cls; el.dataset.view = view;
+      el.appendChild(svg.cloneNode(true));
+      var s = document.createElement('span'); s.textContent = label; el.appendChild(s);
+      return el;
+    }
+    function go(view){ closeSheet(); info[view].btn.click(); }
+    main.forEach(function(v){
+      var t = mk('m-tab', v, v === 'analitik' ? 'Insight' : info[v].label, info[v].svg);
+      t.addEventListener('click', function(){ go(v); });
+      bar.appendChild(t);
+    });
+    var menuSvg = new DOMParser().parseFromString('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="6" r="1.4"/><circle cx="12" cy="6" r="1.4"/><circle cx="19" cy="6" r="1.4"/><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/><circle cx="5" cy="18" r="1.4"/><circle cx="12" cy="18" r="1.4"/><circle cx="19" cy="18" r="1.4"/></svg>', 'image/svg+xml').documentElement;
+    var menuTab = mk('m-tab', 'menu', 'Menu', menuSvg);
+    menuTab.addEventListener('click', function(){
+      var open = !sheet.classList.contains('open');
+      bg.classList.toggle('open', open); sheet.classList.toggle('open', open);
+    });
+    bar.appendChild(menuTab);
+    more.forEach(function(v){
+      var it = mk('m-sheet-item', v, info[v].label, info[v].svg);
+      it.addEventListener('click', function(){ go(v); });
+      sheet.appendChild(it);
+    });
+    bg.addEventListener('click', closeSheet);
+    document.body.appendChild(bg); document.body.appendChild(sheet); document.body.appendChild(bar);
+
+    // badge notifikasi di tab
+    var nb = document.getElementById('notif-badge');
+    var notifTab = bar.querySelector('.m-tab[data-view="notifikasi"]');
+    var tb = document.createElement('span'); tb.className = 'm-badge'; notifTab.appendChild(tb);
+    function syncBadge(){ tb.textContent = nb.textContent; tb.style.display = nb.classList.contains('hidden') ? 'none' : ''; }
+    syncBadge();
+    new MutationObserver(syncBadge).observe(nb, {childList:true, characterData:true, subtree:true, attributes:true});
+
+    // sinkron tab aktif dengan menu yang sedang dibuka
+    function syncTabs(view){
+      bar.querySelectorAll('.m-tab').forEach(function(t){
+        t.classList.toggle('active', t.dataset.view === view || (t.dataset.view === 'menu' && more.indexOf(view) > -1));
+      });
+      sheet.querySelectorAll('.m-sheet-item').forEach(function(i){ i.classList.toggle('active', i.dataset.view === view); });
+    }
+    document.querySelectorAll('.nav-item[data-view]').forEach(function(b){
+      b.addEventListener('click', function(){ syncTabs(b.dataset.view); });
+    });
+    syncTabs('dashboard');
+
+    var ms = document.getElementById('m-search');
+    if(ms) ms.addEventListener('click', function(){ closeSheet(); document.getElementById('search-open').click(); });
+  })();
+
+  // ---- Theme toggle ----
+  document.querySelectorAll('.theme-toggle').forEach(function(b){
+    b.addEventListener('click', function(){
+      var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+      var next = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('pantau-theme', next); } catch(e) {}
+    });
+  });
+
+  // ---- Toast, modal & button actions ----
+  (function(){
+    var toast = document.getElementById('toast'), tt;
+    function show(msg){
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(tt);
+      tt = setTimeout(function(){ toast.classList.remove('show'); }, 2300);
+    }
+    var modal = document.getElementById('connect-modal');
+    function openModal(){ modal.classList.add('open'); }
+    function closeModal(){ modal.classList.remove('open'); }
+    modal.addEventListener('click', function(e){
+      var it = e.target.closest('.modal-item');
+      if(it){ closeModal(); show('Mengarahkan ke login ' + it.dataset.name + '… (contoh)'); return; }
+      if(e.target === modal || e.target.closest('[data-close]')) closeModal();
+    });
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeModal(); });
+
+    function go(view){ var b = document.querySelector('.nav-item[data-view="' + view + '"]'); if(b) b.click(); window.scrollTo(0, 0); }
+    function p2(n){ return (n < 10 ? '0' : '') + n; }
+    function nowTime(){ var d = new Date(); return p2(d.getHours()) + ':' + p2(d.getMinutes()) + ':' + p2(d.getSeconds()); }
+    function stamp(){ var d = new Date(); var mo = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des']; return d.getDate() + ' ' + mo[d.getMonth()] + ', ' + p2(d.getHours()) + ':' + p2(d.getMinutes()); }
+    function addLog(action, acc, detail, ok){
+      var tb = document.querySelector('#view-log tbody');
+      if(!tb) return;
+      var tr = document.createElement('tr');
+      [nowTime(), action, acc, detail].forEach(function(c, i){
+        var td = document.createElement('td');
+        if(i === 0) td.className = 'mono';
+        td.textContent = c;
+        tr.appendChild(td);
+      });
+      var td = document.createElement('td');
+      var s = document.createElement('span');
+      s.className = 'status-chip ' + (ok ? 'success' : 'error');
+      s.textContent = ok ? 'Sukses' : 'Gagal';
+      td.appendChild(s); tr.appendChild(td);
+      tb.insertBefore(tr, tb.firstChild);
+    }
+    function setChip(tr, cls, text){ var c = tr.querySelector('.status-chip'); if(c){ c.className = 'status-chip ' + cls; c.textContent = text; } }
+    function qSync(){
+      var n = 0;
+      document.querySelectorAll('#view-antrian tbody tr').forEach(function(r){
+        var c = r.querySelector('.status-chip');
+        if(c && !c.classList.contains('success')) n++;
+      });
+      var rt = document.querySelector('#view-antrian .runtime');
+      if(rt) rt.innerHTML = '<span class="dot"></span> ' + n + ' item menunggu diproses';
+    }
+    function akunSync(){
+      var cards = document.querySelectorAll('#view-akun .acc-card'), on = 0, plats = {};
+      cards.forEach(function(c){ if(c.querySelector('.pill.on')) on++; plats[c.dataset.platform] = 1; });
+      var rt = document.querySelector('#view-akun .runtime');
+      if(rt) rt.innerHTML = '<span class="dot"></span> ' + on + ' dari ' + cards.length + ' akun aktif · ' + Object.keys(plats).length + ' platform';
+      document.querySelectorAll('#platform-filter .chip').forEach(function(ch){
+        var p = ch.dataset.platform, n = 0;
+        cards.forEach(function(c){ if(p === 'all' || c.dataset.platform === p) n++; });
+        var cnt = ch.querySelector('.count');
+        if(cnt) cnt.textContent = n;
+      });
+    }
+    function rowVal(card, label, text){
+      card.querySelectorAll('.acc-row').forEach(function(r){
+        var s = r.querySelector('span');
+        if(s && s.textContent === label){
+          var v = r.querySelector('b');
+          if(v){ v.textContent = text; v.removeAttribute('style'); }
+        }
+      });
+    }
+    function act(b, key){
+      var card = b.closest('.acc-card'), row = b.closest('tr'), mod = b.closest('.module-card'), notif = b.closest('.notif-item');
+      var handle = card ? card.querySelector('.acc-handle').textContent : '';
+      if(notif && !notif.classList.contains('read')) notif.click();
+      if(key === 'hapus' && card){
+        var inAkun = !!card.closest('#view-akun');
+        card.remove();
+        if(inAkun) akunSync();
+        return handle + ' dihapus';
+      }
+      if(key === 'run now'){
+        if(mod){
+          var nm = mod.querySelector('.module-name').textContent;
+          var tag = mod.querySelector('.status-tag');
+          if(tag){ tag.className = 'status-tag ok'; tag.textContent = 'Sukses'; }
+          addLog('Jalankan Modul', '@ar****h', nm + ' — manual run', true);
+          return 'Modul ' + nm + ' dijalankan, tercatat di Log';
+        }
+        addLog('Auto-Reply', '@ar****h', 'Dijalankan manual', true);
+        return 'Auto-reply dijalankan, tercatat di Log';
+      }
+      if(key === 'segarkan token' && card){
+        rowVal(card, 'Divalidasi', stamp());
+        addLog('Refresh Token', handle, 'Token diperbarui', true);
+        return 'Token ' + handle + ' diperbarui';
+      }
+      if((key === 'sambungkan' || key === 'sambungkan ulang') && card && card.closest('#view-akun')){
+        var pill = card.querySelector('.pill');
+        if(pill){ pill.className = 'pill on'; pill.innerHTML = '<i class="pill dot-i"></i>Terhubung'; }
+        rowVal(card, 'Status', 'Baru tersambung');
+        rowVal(card, 'Terakhir sinkron', 'Baru saja');
+        b.textContent = 'Gunakan'; b.className = 'btn small';
+        addLog('Sambungkan Akun', handle, 'Berhasil tersambung', true);
+        akunSync();
+        return handle + ' tersambung';
+      }
+      if(key === 'coba lagi' && row){
+        setChip(row, 'pending', 'Diproses');
+        b.textContent = 'Lihat'; b.className = 'btn small ghost';
+        addLog('Publikasi Konten', row.cells[1].textContent, 'Dicoba ulang dari antrian', true);
+        setTimeout(function(){ setChip(row, 'success', 'Terkirim'); qSync(); }, 1500);
+        qSync();
+        return 'Dicoba ulang, sedang diproses…';
+      }
+      if(key === 'coba lagi' && notif){
+        addLog('Publikasi Konten', '@ar****h', 'Dicoba ulang', true);
+        return 'Dicoba ulang, masuk antrian';
+      }
+      if(key === 'batal' && row){
+        row.remove(); qSync();
+        return 'Item dibatalkan dan dihapus dari antrian';
+      }
+      if(key === 'proses semua'){
+        var c = 0;
+        document.querySelectorAll('#view-antrian tbody tr').forEach(function(r){
+          var ch = r.querySelector('.status-chip');
+          if(ch && (ch.classList.contains('queued') || ch.classList.contains('pending'))){
+            c++; setChip(r, 'pending', 'Diproses');
+            setTimeout(function(){ setChip(r, 'success', 'Terkirim'); qSync(); }, 1300);
+          }
+        });
+        addLog('Proses Antrian', 'Semua akun', c + ' item diproses', true);
+        return 'Memproses ' + c + ' item…';
+      }
+      if(key === 'bersihkan gagal'){
+        var n = 0;
+        document.querySelectorAll('#view-antrian tbody tr').forEach(function(r){
+          if(r.querySelector('.status-chip.error')){ r.remove(); n++; }
+        });
+        qSync();
+        return n ? n + ' item gagal dibersihkan' : 'Tidak ada item gagal';
+      }
+      if(key === 'kirim ulang' && card){
+        rowVal(card, 'Dikirim', 'Baru saja');
+        return 'Undangan dikirim ulang ke ' + handle;
+      }
+      if(key === 'emergency stop all'){
+        document.querySelectorAll('#view-automasi .switch').forEach(function(s){ s.classList.remove('on'); });
+        document.querySelectorAll('#view-automasi .status-tag').forEach(function(t){ t.className = 'status-tag off'; t.textContent = 'Nonaktif'; });
+        addLog('Emergency Stop', 'Semua akun', 'Semua modul dihentikan', true);
+        return 'Semua automasi dihentikan';
+      }
+      return null;
+    }
+    var map = {
+      'run now':'Modul dijalankan sekarang', 'segarkan token':'Token berhasil diperbarui', 'coba lagi':'Dicoba ulang, masuk antrian',
+      'simpan':'Pengaturan tersimpan', 'simpan perubahan':'Perubahan tersimpan', 'generate preview':'Pratinjau balasan dibuat',
+      'post reply':'Balasan diposting', 'proses semua':'Memproses semua item antrian…', 'bersihkan gagal':'Item gagal dibersihkan dari antrian',
+      'batal':'Item dibatalkan', 'emergency stop all':'Semua automasi dihentikan', 'kirim ulang':'Undangan dikirim ulang',
+      'gunakan':'Akun dijadikan akun aktif', 'sambungkan':'Membuka login OAuth…', 'sambungkan ulang':'Menyambungkan ulang…',
+      'ekspor csv':'Mengekspor CSV…', 'unggah':'Pilih file untuk diunggah', 'generate ai image':'Membuat gambar AI…',
+      'ubah peran':'Pilih peran baru untuk anggota', 'hapus':'Dihapus (contoh, data tidak berubah)', 'undang anggota':'Form undangan anggota dibuka',
+      'tambah modul':'Daftar modul baru dibuka', 'jadwalkan konten':'Form jadwal konten dibuka', '← sep':'Contoh: kalender hanya Oktober 2026',
+      'nov →':'Contoh: kalender hanya Oktober 2026', 'lanjut →':'Lanjut ke langkah 2: Jadwal', 'draf tersimpan':'Belum ada draf tersimpan',
+      'selesaikan':'Membuka verifikasi OAuth…', 'token manual':'Form token manual dibuka', 'buka panel':'Membuka panel Kom Toso Plant…',
+      'lihat':'Membuka detail…', 'settings':'Pengaturan modul dibuka'
+    };
+    document.addEventListener('click', function(e){
+      var b = e.target.closest('button.btn');
+      if(!b || b.hasAttribute('data-close')) return;
+      var txt = b.textContent.replace(/\s+/g, ' ').trim();
+      var key = txt.toLowerCase().replace(/^\+\s*/, '');
+      if(key === 'sambungkan akun'){ openModal(); return; }
+      if(key === 'buka log'){ go('log'); return; }
+      if(key.indexOf('lihat antrian') === 0){ go('antrian'); return; }
+      if(b.id === 'notif-readall'){ show('Semua notifikasi ditandai dibaca'); return; }
+      var custom = act(b, key);
+      show(custom || map[key] || (txt + ' — contoh aksi di mockup'));
+    });
+  })();
+
+  // ---- Platform filter ----
+  var platformFilter = document.getElementById('platform-filter');
+  if(platformFilter){
+    platformFilter.querySelectorAll('.chip').forEach(function(chip){
+      chip.addEventListener('click', function(){
+        platformFilter.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('on'); });
+        chip.classList.add('on');
+        var plat = chip.dataset.platform;
+        document.querySelectorAll('#view-akun .acc-card').forEach(function(card){
+          card.classList.toggle('hidden', plat !== 'all' && card.dataset.platform !== plat);
+        });
+      });
+    });
+  }
+
+  // ---- Toggle switches ----
+  document.querySelectorAll('[data-toggle]').forEach(function(sw){
+    sw.addEventListener('click', function(){
+      sw.classList.toggle('on');
+    });
+  });
+
+  // ---- Segmented control (visual only) ----
+  document.querySelectorAll('.seg').forEach(function(seg){
+    seg.querySelectorAll('button').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        seg.querySelectorAll('button').forEach(function(b){ b.classList.remove('on'); });
+        btn.classList.add('on');
+      });
+    });
+  });
+
+  // ---- Chart (inline SVG bars) ----
+  (function(){
+    var days = ['09-09','10-09','11-09','12-09','13-09','14-09','15-09'];
+    var posted = [7,9,6,10,8,11,10];
+    var success = [6,8,6,9,7,10,9];
+    var failed  = [0,1,0,1,1,0,1];
+    var w = 640, h = 190, pad = 26, gap = 14;
+    var groupW = (w - pad*2) / days.length;
+    var barW = (groupW - gap) / 3;
+    var maxV = Math.max.apply(null, posted) + 2;
+
+    function y(v){ return h - pad - (v / maxV) * (h - pad*2); }
+
+    var bars = '';
+    days.forEach(function(d, i){
+      var x0 = pad + i * groupW;
+      [
+        ['posted', posted[i], 'var(--amber)'],
+        ['success', success[i], 'var(--green)'],
+        ['failed', failed[i], 'var(--red)']
+      ].forEach(function(item, j){
+        var val = item[1];
+        var bx = x0 + j * barW;
+        var by = y(val);
+        var bh = (h - pad) - by;
+        bars += '<rect x="'+bx.toFixed(1)+'" y="'+by.toFixed(1)+'" width="'+(barW-3).toFixed(1)+'" height="'+Math.max(bh,1).toFixed(1)+'" rx="2.5" fill="'+item[2]+'" opacity="'+(item[0]==='failed' && val===0 ? 0.15 : 0.92)+'"/>';
+      });
+      bars += '<text x="'+(x0 + groupW/2 - gap/2).toFixed(1)+'" y="'+(h-4)+'" text-anchor="middle" font-size="9.5" fill="var(--text-faint)" font-family="JetBrains Mono, monospace">'+d+'</text>';
+    });
+
+    // gridlines
+    var grid = '';
+    for(var g=0; g<=3; g++){
+      var gy = pad + g * ((h - pad*2)/3);
+      grid += '<line x1="'+pad+'" y1="'+gy.toFixed(1)+'" x2="'+(w-6)+'" y2="'+gy.toFixed(1)+'" stroke="var(--border-soft)" stroke-width="1"/>';
+    }
+
+    var svg = '<svg viewBox="0 0 '+w+' '+h+'" width="100%" style="display:block; overflow:visible;">' + grid + bars + '</svg>';
+    document.getElementById('chart').innerHTML = svg;
+  })();
+
+  // =====================================================================
+  // KONEKSI SUPABASE (data nyata): login, Akun, Log & Audit, angka Dasbor
+  // =====================================================================
+  (function(){
+    var SUPABASE_URL = 'https://vtfkjruevrypvoryvsqq.supabase.co';
+    var SUPABASE_KEY = 'sb_publishable_2f9WVxk5GY4gLvWCjHApLA_ilykEBDo'; // kunci publishable, aman di frontend
+
+    var overlay = document.getElementById('auth-overlay');
+    var msg = document.getElementById('auth-msg');
+    var form = document.getElementById('auth-form');
+    var btn = document.getElementById('auth-submit');
+    function setMsg(t, bad){ msg.textContent = t || ''; msg.style.color = bad ? 'var(--red)' : 'var(--text-faint)'; }
+
+    if(!window.supabase || !window.supabase.createClient){
+      setMsg('Library Supabase gagal dimuat. Cek koneksi internet lalu muat ulang halaman.', true);
+      return;
+    }
+    var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    var WS = null;
+    var ACC = {};
+
+    var PLAT = {
+      threads:{n:'Threads', i:'TH', c:''}, instagram:{n:'Instagram', i:'IG', c:'plat-ig'},
+      tiktok:{n:'TikTok', i:'TT', c:'plat-tiktok'}, youtube:{n:'YouTube', i:'YT', c:'plat-youtube'},
+      facebook:{n:'Facebook', i:'FB', c:'plat-facebook'}, x:{n:'X (Twitter)', i:'X', c:'plat-x'},
+      whatsapp:{n:'WhatsApp', i:'WA', c:'plat-whatsapp'}, telegram:{n:'Telegram', i:'TG', c:'plat-telegram'},
+      pinterest:{n:'Pinterest', i:'PN', c:'plat-pinterest'}, lynk:{n:'Lynk.id', i:'LK', c:'plat-lynk'},
+      internal:{n:'Internal', i:'IN', c:''}
+    };
+    var ROLE = {owner:'Pemilik', editor:'Editor', analyst:'Analis', viewer:'Viewer'};
+
+    function esc(s){
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+        return {'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c];
+      });
+    }
+    var toastEl = document.getElementById('toast'), tt;
+    function toast(t){
+      toastEl.textContent = t;
+      toastEl.classList.add('show');
+      clearTimeout(tt);
+      tt = setTimeout(function(){ toastEl.classList.remove('show'); }, 2800);
+    }
+    function fmt(d){
+      return d ? new Date(d).toLocaleString('id-ID', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}) : '\u2014';
+    }
+    function tokenText(d){
+      if(!d) return '\u2014';
+      var ms = new Date(d) - new Date();
+      if(ms <= 0) return 'Kedaluwarsa';
+      var h = ms / 36e5;
+      return h < 48 ? Math.round(h) + ' jam lagi' : Math.round(h / 24) + ' hari lagi';
+    }
+    function statusInfo(a){
+      if(!a.is_active) return {on:false, t:'Nonaktif'};
+      if(a.status === 'connected') return {on:true, t:'Terhubung'};
+      if(a.status === 'needs_verification') return {on:false, t:'Perlu Verifikasi'};
+      if(a.status === 'disconnected') return {on:false, t:'Terputus'};
+      return {on:false, t:'Error'};
+    }
+
+    // ---------- Render ----------
+    function renderAkun(list){
+      var grid = document.querySelector('#view-akun .acc-grid');
+      ACC = {};
+      list.forEach(function(a){ ACC[a.id] = a; });
+      if(!list.length){
+        grid.innerHTML = '<div class="acc-card" data-platform="all"><div class="acc-handle">Belum ada akun</div>' +
+          '<div class="acc-plat" style="margin-top:6px">Klik + Sambungkan Akun untuk menambah akun pertama.</div></div>';
+      } else {
+        grid.innerHTML = list.map(function(a){
+          var p = PLAT[a.platform] || {n:a.platform, i:'??', c:''};
+          var s = statusInfo(a);
+          var rows = '';
+          if(a.followers != null){
+            rows += '<div class="acc-row"><span>Followers</span><b class="mono">' + esc(Number(a.followers).toLocaleString('id-ID')) + '</b></div>';
+          }
+          rows += '<div class="acc-row"><span>Divalidasi</span><b>' + esc(fmt(a.last_validated_at)) + '</b></div>';
+          rows += '<div class="acc-row"><span>Token</span><b>' + esc(tokenText(a.token_expires_at)) + '</b></div>';
+          return '<div class="acc-card" data-platform="' + esc(a.platform) + '" data-id="' + esc(a.id) + '">' +
+            '<div class="acc-top"><div class="acc-avatar ' + p.c + '">' + p.i + '</div>' +
+            '<div><div class="acc-handle">' + esc(a.display_name || a.handle) + '</div>' +
+            '<div class="acc-plat">' + esc(p.n) + (a.display_name ? ' \u00b7 ' + esc(a.handle) : '') + '</div></div>' +
+            '<span class="pill ' + (s.on ? 'on' : 'off') + '"><i class="pill dot-i"></i>' + s.t + '</span></div>' +
+            rows +
+            '<div class="acc-actions"><button class="btn small danger" data-del="' + esc(a.id) + '">Hapus</button></div></div>';
+        }).join('');
+      }
+      var on = list.filter(function(a){ return a.is_active && a.status === 'connected'; }).length;
+      var plats = {};
+      list.forEach(function(a){ plats[a.platform] = 1; });
+      var rt = document.querySelector('#view-akun .runtime');
+      if(rt) rt.innerHTML = '<span class="dot"></span> ' + on + ' dari ' + list.length + ' akun aktif \u00b7 ' + Object.keys(plats).length + ' platform';
+      document.querySelectorAll('#platform-filter .chip').forEach(function(ch){
+        var k = ch.dataset.platform;
+        var n = list.filter(function(a){ return k === 'all' || a.platform === k; }).length;
+        var c = ch.querySelector('.count');
+        if(c) c.textContent = n;
+      });
+      var act = document.querySelector('#platform-filter .chip.on');
+      if(act) act.click();
+    }
+
+    function renderLog(rows){
+      var tb = document.querySelector('#view-log tbody');
+      if(!rows.length){
+        tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-faint)">Belum ada aktivitas tercatat.</td></tr>';
+      } else {
+        tb.innerHTML = rows.map(function(r){
+          var a = r.account_id ? ACC[r.account_id] : null;
+          var who = a ? (a.display_name || a.handle) : '\u2014';
+          var ok = r.status === 'success';
+          return '<tr><td class="mono">' + esc(fmt(r.created_at)) + '</td><td>' + esc(r.action) + '</td><td>' + esc(who) +
+            '</td><td>' + esc(r.detail || '') + '</td><td><span class="status-chip ' + (ok ? 'success' : 'error') + '">' +
+            (ok ? 'Sukses' : 'Gagal') + '</span></td></tr>';
+        }).join('');
+      }
+    }
+
+    function renderStats(s, logCount){
+      var map = {
+        'Total Akun': s.total_akun, 'Akun Aktif': s.akun_aktif, 'Konten Terjadwal': s.antrian,
+        'Error 24 Jam': s.error_24_jam, 'Media Tersimpan': s.media, 'Baris Log Audit': logCount
+      };
+      document.querySelectorAll('#view-dashboard .stat-card').forEach(function(c){
+        var l = c.querySelector('.label').textContent.trim();
+        if(Object.prototype.hasOwnProperty.call(map, l)){
+          c.querySelector('.value').textContent = map[l];
+          var d = c.querySelector('.delta');
+          if(d){ d.className = 'delta'; d.textContent = 'Data langsung'; }
+        }
+      });
+    }
+
+    // ---------- Muat data ----------
+    async function loadAll(){
+      var a = await sb.from('accounts').select('*').eq('workspace_id', WS).order('created_at', {ascending:true});
+      if(a.error){ toast('Gagal memuat akun: ' + a.error.message); return; }
+      renderAkun(a.data);
+      var l = await sb.from('audit_logs').select('*').eq('workspace_id', WS).order('created_at', {ascending:false}).limit(100);
+      if(l.error){ toast('Gagal memuat log: ' + l.error.message); } else { renderLog(l.data); }
+      var s = await sb.from('v_dashboard_summary').select('*').eq('workspace_id', WS).maybeSingle();
+      var c = await sb.from('audit_logs').select('id', {count:'exact', head:true}).eq('workspace_id', WS);
+      if(s.data) renderStats(s.data, c.count == null ? 0 : c.count);
+      await loadQueue();
+      await renderCalendar();
+    }
+
+    async function start(session){
+      var m = await sb.from('workspace_members').select('workspace_id, role').eq('user_id', session.user.id)
+        .order('created_at', {ascending:true}).limit(1);
+      if(m.error){
+        form.style.display = '';
+        setMsg('Gagal membaca ruang kerja: ' + m.error.message, true);
+        return;
+      }
+      if(!m.data || !m.data.length){
+        form.style.display = '';
+        setMsg('Akun ini belum punya ruang kerja. Jalankan langkah 3 (insert ke public.workspaces) lalu coba lagi.', true);
+        return;
+      }
+      WS = m.data[0].workspace_id;
+      var email = session.user.email || '';
+      var nm = document.querySelector('.sidebar-foot .name');
+      var rl = document.querySelector('.sidebar-foot .role');
+      var av = document.querySelector('.sidebar-foot .avatar');
+      if(nm) nm.textContent = email.split('@')[0] || 'Pengguna';
+      if(rl) rl.textContent = ROLE[m.data[0].role] || m.data[0].role;
+      if(av) av.textContent = (email.slice(0, 2) || '??').toUpperCase();
+      overlay.classList.add('hidden');
+      await loadAll();
+    }
+
+    // ---------- Login ----------
+    async function login(){
+      var em = document.getElementById('auth-email').value.trim();
+      var pw = document.getElementById('auth-pass').value;
+      if(!em || !pw){ setMsg('Isi email dan password.', true); return; }
+      setMsg('Masuk\u2026');
+      btn.disabled = true;
+      var r = await sb.auth.signInWithPassword({email: em, password: pw});
+      btn.disabled = false;
+      if(r.error){
+        setMsg(r.error.message.indexOf('Invalid login') > -1 ? 'Email atau password salah.' : r.error.message, true);
+        return;
+      }
+      setMsg('');
+      start(r.data.session);
+    }
+    btn.addEventListener('click', login);
+    document.getElementById('auth-pass').addEventListener('keydown', function(e){ if(e.key === 'Enter') login(); });
+
+    sb.auth.getSession().then(function(r){
+      if(r.data && r.data.session){ start(r.data.session); }
+      else { form.style.display = ''; setMsg(''); }
+    });
+
+    // ---------- Aksi nyata (fase capture, jalan sebelum aksi contoh) ----------
+    document.addEventListener('click', async function(e){
+      if(e.target.closest('#btn-logout')){
+        e.stopPropagation();
+        await sb.auth.signOut();
+        location.reload();
+        return;
+      }
+      var del = e.target.closest('[data-del]');
+      if(del){
+        e.stopPropagation();
+        var a = ACC[del.dataset.del];
+        if(!a) return;
+        if(!confirm('Hapus akun ' + (a.display_name || a.handle) + '? Antrian dan pengaturan automasinya ikut terhapus.')) return;
+        var r = await sb.from('accounts').delete().eq('id', a.id).select();
+        if(r.error){ toast('Gagal menghapus: ' + r.error.message); return; }
+        if(!r.data || !r.data.length){ toast('Tidak diizinkan: hanya Pemilik yang bisa menghapus akun.'); return; }
+        toast('Akun dihapus');
+        loadAll();
+        return;
+      }
+      var mi = e.target.closest('#connect-modal .modal-item');
+      if(mi){
+        e.stopPropagation();
+        document.getElementById('connect-modal').classList.remove('open');
+        var name = mi.dataset.name;
+        var handle = prompt('Masukkan handle / nama akun ' + name + ' (contoh: @namaakun):');
+        if(!handle || !handle.trim()) return;
+        var ins = await sb.from('accounts').insert({
+          workspace_id: WS, platform: name.toLowerCase(), handle: handle.trim(), status: 'needs_verification'
+        }).select();
+        if(ins.error){
+          toast(ins.error.code === '42501' ? 'Tidak diizinkan: hanya Pemilik yang bisa menambah akun.' : 'Gagal menambah: ' + ins.error.message);
+          return;
+        }
+        toast('Akun ditambahkan (status: perlu verifikasi)');
+        loadAll();
+      }
+    }, true);
+
+    // =================================================================
+    // ANTRIAN & KALENDER (tabel content_queue)
+    // =================================================================
+    var CTYPE = {
+      horror:'Horror', menfess:'Menfess / Curhat', story:'Story / Drama', fakta_unik:'Fakta Unik',
+      misteri:'Misteri', relationship:'Relationship', motivasi:'Motivasi', humor:'Humor',
+      trivia:'Trivia / Quiz', tips:'Tips / Life Hack', tech_ai:'Tech / AI', news:'News / Trending'
+    };
+    var QSTAT = {
+      queued:['queued', 'Terjadwal'], processing:['pending', 'Diproses'], published:['success', 'Terkirim'],
+      failed:['error', 'Gagal'], cancelled:['queued', 'Dibatalkan']
+    };
+    var PCOL = {
+      threads:'#8A93A8', instagram:'#DD2A7B', tiktok:'#25F4EE', youtube:'#FF0000', facebook:'#1877F2',
+      telegram:'#229ED9', whatsapp:'#25D366', x:'#6B7280', pinterest:'#E60023', lynk:'#D93A31', internal:'#4FA8E8'
+    };
+    var MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    var MON3 = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    var CAL = {y: new Date().getFullYear(), m: new Date().getMonth()};
+
+    function p2(n){ return (n < 10 ? '0' : '') + n; }
+    function accName(id){ var a = ACC[id]; return a ? (a.display_name || a.handle) : '\u2014'; }
+    function short(t, n){
+      t = String(t || '').replace(/\s+/g, ' ').trim();
+      return t.length > n ? t.slice(0, n) + '\u2026' : t;
+    }
+
+    async function loadQueue(){
+      var q = await sb.from('content_queue').select('*').eq('workspace_id', WS)
+        .order('scheduled_at', {ascending:true}).limit(200);
+      if(q.error){ toast('Gagal memuat antrian: ' + q.error.message); return; }
+      var tb = document.querySelector('#view-antrian tbody');
+      if(!q.data.length){
+        tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-faint)">Antrian kosong. Klik + Jadwalkan Konten untuk menambah.</td></tr>';
+      } else {
+        tb.innerHTML = q.data.map(function(r){
+          var st = QSTAT[r.status] || ['queued', r.status];
+          var act = '';
+          if(r.status === 'queued') act = '<button class="btn small ghost" data-q-cancel="' + esc(r.id) + '">Batal</button>';
+          else if(r.status === 'failed') act = '<button class="btn small primary" data-q-retry="' + esc(r.id) + '">Coba Lagi</button>';
+          else if(r.status === 'cancelled') act = '<button class="btn small ghost" data-q-del="' + esc(r.id) + '">Hapus</button>';
+          return '<tr><td>' + esc(short(r.body, 60)) + '</td><td>' + esc(accName(r.account_id)) + '</td><td>' +
+            esc(CTYPE[r.content_type] || '\u2014') + '</td><td class="mono">' + esc(fmt(r.scheduled_at)) +
+            '</td><td><span class="status-chip ' + st[0] + '">' + st[1] + '</span></td><td>' + act + '</td></tr>';
+        }).join('');
+      }
+      var n = q.data.filter(function(r){ return r.status === 'queued' || r.status === 'processing'; }).length;
+      var rt = document.querySelector('#view-antrian .runtime');
+      if(rt) rt.innerHTML = '<span class="dot"></span> ' + n + ' item menunggu diproses';
+      document.querySelectorAll('#view-dashboard .topbar-actions .btn').forEach(function(b){
+        if(b.textContent.trim().toLowerCase().indexOf('lihat antrian') === 0) b.textContent = 'Lihat Antrian (' + n + ')';
+      });
+    }
+
+    async function renderCalendar(){
+      var grid = document.getElementById('cal-grid');
+      if(!grid) return;
+      var start = new Date(CAL.y, CAL.m, 1), end = new Date(CAL.y, CAL.m + 1, 1);
+      var q = await sb.from('content_queue').select('id, account_id, content_type, body, scheduled_at, status')
+        .eq('workspace_id', WS).gte('scheduled_at', start.toISOString()).lt('scheduled_at', end.toISOString())
+        .neq('status', 'cancelled').order('scheduled_at', {ascending:true});
+      if(q.error){ toast('Gagal memuat kalender: ' + q.error.message); return; }
+      var byDay = {};
+      q.data.forEach(function(r){
+        var dd = new Date(r.scheduled_at).getDate();
+        (byDay[dd] = byDay[dd] || []).push(r);
+      });
+      var html = ['Sen','Sel','Rab','Kam','Jum','Sab','Min'].map(function(x){ return '<div class="cal-head">' + x + '</div>'; }).join('');
+      var offset = (start.getDay() + 6) % 7;
+      for(var i = 0; i < offset; i++) html += '<div class="cal-day blank"></div>';
+      var days = new Date(CAL.y, CAL.m + 1, 0).getDate(), now = new Date();
+      for(var d = 1; d <= days; d++){
+        var items = byDay[d] || [];
+        var isToday = now.getFullYear() === CAL.y && now.getMonth() === CAL.m && now.getDate() === d;
+        html += '<div class="cal-day' + (isToday ? ' today' : '') + '"><div class="cal-num mono">' + d + '</div>';
+        items.slice(0, 2).forEach(function(r){
+          var a = ACC[r.account_id];
+          var col = PCOL[a ? a.platform : ''] || '#8A93A8';
+          html += '<div class="cal-chip" style="--c:' + col + '"><i></i><span>' + esc(CTYPE[r.content_type] || short(r.body, 12)) + '</span></div>';
+        });
+        if(items.length > 2) html += '<div class="cal-more">+' + (items.length - 2) + '</div>';
+        html += '</div>';
+      }
+      grid.innerHTML = html;
+      var rt = document.querySelector('#view-kalender .runtime');
+      if(rt) rt.innerHTML = '<span class="dot"></span> ' + MONTHS[CAL.m] + ' ' + CAL.y + ' \u00b7 ' + q.data.length + ' konten terjadwal';
+      var pv = new Date(CAL.y, CAL.m - 1, 1), nx = new Date(CAL.y, CAL.m + 1, 1);
+      var bp = document.getElementById('cal-prev'), bn = document.getElementById('cal-next');
+      if(bp) bp.textContent = '\u2190 ' + MON3[pv.getMonth()];
+      if(bn) bn.textContent = MON3[nx.getMonth()] + ' \u2192';
+    }
+
+    // ---------- Persiapan tombol & modal ----------
+    (function(){
+      var bs = document.querySelectorAll('#view-kalender .topbar-actions .btn.ghost');
+      if(bs[0]) bs[0].id = 'cal-prev';
+      if(bs[1]) bs[1].id = 'cal-next';
+      var ta = document.querySelector('#view-antrian .topbar-actions');
+      if(ta){
+        var ab = document.createElement('button');
+        ab.className = 'btn primary'; ab.id = 'btn-add-content'; ab.textContent = '+ Jadwalkan Konten';
+        ta.appendChild(ab);
+      }
+    })();
+
+    var cm = document.createElement('div');
+    cm.className = 'modal-overlay';
+    cm.id = 'content-modal';
+    cm.innerHTML = '<div class="modal-box"><h3>Jadwalkan Konten</h3>' +
+      '<p>Konten masuk antrian dan diproses saat waktunya tiba.</p>' +
+      '<div class="field"><label>Akun</label><select id="cm-acc"></select></div>' +
+      '<div class="field"><label>Jenis konten</label><select id="cm-type"></select></div>' +
+      '<div class="field"><label>Isi konten</label><textarea id="cm-body" rows="5" placeholder="Tulis isi postingan\u2026"></textarea></div>' +
+      '<div class="field"><label>Jadwal</label><input id="cm-when" type="datetime-local"></div>' +
+      '<div id="cm-msg" style="font-size:12px;color:var(--red);min-height:16px;margin-bottom:8px"></div>' +
+      '<div style="display:flex;gap:8px"><button class="auth-btn" id="cm-save" type="button">Simpan</button>' +
+      '<button class="auth-btn ghost" id="cm-cancel" type="button">Batal</button></div></div>';
+    document.body.appendChild(cm);
+
+    function openContentModal(){
+      var accs = Object.keys(ACC).map(function(k){ return ACC[k]; });
+      if(!accs.length){ toast('Tambah akun dulu sebelum menjadwalkan konten.'); return; }
+      document.getElementById('cm-acc').innerHTML = accs.map(function(a){
+        return '<option value="' + esc(a.id) + '">' + esc((PLAT[a.platform] || {n:a.platform}).n + ' \u00b7 ' + (a.display_name || a.handle)) + '</option>';
+      }).join('');
+      document.getElementById('cm-type').innerHTML = Object.keys(CTYPE).map(function(k){
+        return '<option value="' + k + '">' + esc(CTYPE[k]) + '</option>';
+      }).join('');
+      var t = new Date(Date.now() + 3600000);
+      t.setMinutes(0, 0, 0);
+      document.getElementById('cm-when').value = t.getFullYear() + '-' + p2(t.getMonth() + 1) + '-' + p2(t.getDate()) + 'T' + p2(t.getHours()) + ':00';
+      document.getElementById('cm-body').value = '';
+      document.getElementById('cm-msg').textContent = '';
+      cm.classList.add('open');
+    }
+
+    async function saveContent(){
+      var body = document.getElementById('cm-body').value.trim();
+      var when = document.getElementById('cm-when').value;
+      var msgEl = document.getElementById('cm-msg');
+      if(!body){ msgEl.textContent = 'Isi konten belum diisi.'; return; }
+      if(!when){ msgEl.textContent = 'Pilih tanggal dan jam.'; return; }
+      var sv = document.getElementById('cm-save');
+      sv.disabled = true;
+      var r = await sb.from('content_queue').insert({
+        workspace_id: WS,
+        account_id: document.getElementById('cm-acc').value,
+        content_type: document.getElementById('cm-type').value,
+        body: body,
+        scheduled_at: new Date(when).toISOString(),
+        status: 'queued'
+      }).select();
+      sv.disabled = false;
+      if(r.error){
+        msgEl.textContent = r.error.code === '42501'
+          ? 'Tidak diizinkan: hanya Pemilik atau Editor yang bisa menjadwalkan konten.'
+          : 'Gagal menyimpan: ' + r.error.message;
+        return;
+      }
+      cm.classList.remove('open');
+      toast('Konten dijadwalkan');
+      loadAll();
+    }
+    document.getElementById('cm-save').addEventListener('click', saveContent);
+    document.getElementById('cm-cancel').addEventListener('click', function(){ cm.classList.remove('open'); });
+    cm.addEventListener('click', function(e){ if(e.target === cm) cm.classList.remove('open'); });
+
+    // ---------- Aksi nyata (fase capture) ----------
+    document.addEventListener('click', async function(e){
+      if(!WS) return;
+      var t = e.target;
+      var cancel = t.closest('[data-q-cancel]'), retry = t.closest('[data-q-retry]'), del = t.closest('[data-q-del]');
+      if(cancel || retry || del){
+        e.stopPropagation();
+        var id = cancel ? cancel.dataset.qCancel : retry ? retry.dataset.qRetry : del.dataset.qDel;
+        var r;
+        if(cancel) r = await sb.from('content_queue').update({status:'cancelled'}).eq('id', id).select();
+        else if(retry) r = await sb.from('content_queue').update({status:'queued', error_message:null, scheduled_at:new Date().toISOString()}).eq('id', id).select();
+        else r = await sb.from('content_queue').delete().eq('id', id).select();
+        if(r.error){ toast('Gagal: ' + r.error.message); return; }
+        if(!r.data || !r.data.length){ toast('Tidak diizinkan: hanya Pemilik atau Editor yang bisa mengubah antrian.'); return; }
+        toast(cancel ? 'Item dibatalkan' : retry ? 'Dijadwalkan ulang' : 'Item dihapus');
+        loadAll();
+        return;
+      }
+      if(t.closest('#btn-add-content')){ e.stopPropagation(); openContentModal(); return; }
+      if(t.closest('#cal-prev')){
+        e.stopPropagation();
+        CAL.m--; if(CAL.m < 0){ CAL.m = 11; CAL.y--; }
+        renderCalendar();
+        return;
+      }
+      if(t.closest('#cal-next')){
+        e.stopPropagation();
+        CAL.m++; if(CAL.m > 11){ CAL.m = 0; CAL.y++; }
+        renderCalendar();
+        return;
+      }
+      var b = t.closest('button.btn');
+      if(b){
+        var key = b.textContent.replace(/\s+/g, ' ').trim().toLowerCase().replace(/^\+\s*/, '');
+        if(key === 'jadwalkan konten'){ e.stopPropagation(); openContentModal(); return; }
+        if(key === 'proses semua' && b.closest('#view-antrian')){
+          e.stopPropagation();
+          toast('Pemroses antrian belum dibuat. Item akan jalan otomatis setelah Edge Function process-queue aktif.');
+          return;
+        }
+        if(key === 'bersihkan gagal' && b.closest('#view-antrian')){
+          e.stopPropagation();
+          var r2 = await sb.from('content_queue').delete().eq('workspace_id', WS).eq('status', 'failed').select();
+          if(r2.error){ toast('Gagal: ' + r2.error.message); return; }
+          toast(r2.data && r2.data.length ? r2.data.length + ' item gagal dibersihkan' : 'Tidak ada item gagal');
+          loadAll();
+        }
+      }
+    }, true);
+  })();
+</script>
+</body>
+</html>
